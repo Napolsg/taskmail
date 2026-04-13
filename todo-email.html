@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.3</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.4</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -1126,11 +1126,14 @@ function cancelContactForm() {
 }
 
 function populateAssigneeSelects() {
-  const opts = `<option value="">-- Personne --</option>
-    <option value="__me__">Moi</option>
-    ${contacts.map(ct => `<option value="${ct.email}">${ct.name} (${ct.email})</option>`).join('')}
-    <option value="__new__">+ Nouveau contact</option>`;
-  ['new-assignee', 'e-assignee'].forEach(id => {
+  let opts = '<option value="">-- Personne --</option>';
+  opts += '<option value="__me__">Moi</option>';
+  contacts.forEach(function(ct, i) {
+    const label = ct.name + (ct.repo ? ' (' + ct.repo + ')' : ct.email ? ' (' + ct.email + ')' : '');
+    opts += '<option value="__contact_' + i + '__">' + label + '</option>';
+  });
+  opts += '<option value="__new__">+ Nouveau contact</option>';
+  ['new-assignee', 'e-assignee'].forEach(function(id) {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });
@@ -1203,7 +1206,8 @@ function saveNewContact() {
   const fromAdd2  = addForm2 && addForm2.style.display !== 'none';
   const triggeredBy = fromAdd2 ? (addForm2.dataset.triggeredBy || 'new-assignee') : (editForm2?.dataset.triggeredBy || 'e-assignee');
   const sel = document.getElementById(triggeredBy);
-  if (sel) sel.value = email;
+  const newIdx = contacts.length - 1;
+  if (sel) sel.value = '__contact_' + newIdx + '__';
   if (editForm2) editForm2.style.display = 'none';
   if (addForm2)  addForm2.style.display  = 'none';
   toast('Contact ' + name + ' ajouté', 'ok');

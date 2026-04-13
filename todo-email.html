@@ -18,7 +18,7 @@ html, body {
   margin: 0 auto;
 }
 
-/* ── HEADER ── */
+/* -- HEADER -- */
 .header {
   padding: 20px 20px 12px;
   background: linear-gradient(135deg, #007AFF 0%, #5B5EA6 100%);
@@ -56,7 +56,7 @@ html, body {
 
 
 
-/* ── FILTERS ── */
+/* -- FILTERS -- */
 .filters {
   display: flex;
   gap: 7px;
@@ -84,7 +84,7 @@ html, body {
 
 
 
-/* ── TASK LIST ── */
+/* -- TASK LIST -- */
 .task-list {
   padding: 0 20px 140px;
   display: flex;
@@ -99,7 +99,7 @@ html, body {
   margin-bottom: 10px;
 }
 
-/* ── TASK ROW ── */
+/* -- TASK ROW -- */
 .task-row {
   display: flex;
   align-items: center;
@@ -167,7 +167,7 @@ html, body {
 }
 .edit-btn:active { background: #E5E5EA; color: #007AFF; }
 
-/* ── EMPTY ── */
+/* -- EMPTY -- */
 .empty {
   text-align: center;
   padding: 60px 20px;
@@ -177,7 +177,7 @@ html, body {
 .empty-title { font-size: 1rem; font-weight: 600; color: #3C3C43; margin-bottom: 4px; }
 .empty-sub { font-size: 0.82rem; }
 
-/* ── ADD BAR ── */
+/* -- ADD BAR -- */
 .add-bar {
   position: fixed;
   bottom: 0;
@@ -233,7 +233,7 @@ html, body {
   box-shadow: 0 1px 3px rgba(0,0,0,0.07);
 }
 
-/* ── BOTTOM SHEET ── */
+/* -- BOTTOM SHEET -- */
 .overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.3);
@@ -374,7 +374,7 @@ html, body {
 .log-r.sim  { color: #FF9500; }
 .log-r.err  { color: #FF3B30; }
 
-/* ── EDIT SHEET ── */
+/* -- EDIT SHEET -- */
 .edit-sel {
   background: transparent; border: none;
   font-family: 'Outfit', sans-serif; font-size: 0.92rem;
@@ -382,7 +382,7 @@ html, body {
   appearance: none; -webkit-appearance: none;
 }
 
-/* ── TOAST ── */
+/* -- TOAST -- */
 #toasts {
   position: fixed; top: 60px;
   left: 50%; transform: translateX(-50%);
@@ -410,7 +410,10 @@ html, body {
 <!-- HEADER -->
 <div class="header">
   <div class="header-top">
-    <div class="app-title">TaskMail</div>
+    <div style="display:flex; align-items:baseline; gap:8px;">
+      <div class="app-title">TaskMail</div>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v2.6</span>
+    </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
     </div>
@@ -450,7 +453,16 @@ html, body {
       <option value="high">🔴 Urgent</option>
       <option value="low">🟢 Faible</option>
     </select>
-    <input class="add-sel" type="text" id="new-project" placeholder="Projet…" style="font-size:0.82rem">
+    <input class="add-sel" type="text" id="new-project" placeholder="Projet…" style="font-size:0.82rem; flex:1; min-width:0;">
+    <select class="add-sel" id="new-assignee" style="font-size:0.82rem; flex:1; min-width:0;" onchange="onAssigneeChange(this)"></select>
+  </div>
+  <div id="add-bar-contact-form" style="display:none; flex-direction:column; gap:6px; margin-top:8px; padding:10px 12px; background:white; border-radius:10px; border:1px solid #E8E8E4;">
+    <div style="font-size:0.75rem; font-weight:600; color:#6C6C68; margin-bottom:2px;">Nouveau contact</div>
+    <div style="display:flex; gap:6px;">
+      <input type="text" id="add-contact-name" placeholder="Nom" style="flex:1; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:8px 10px; font-size:0.82rem; color:#1C1C1E; outline:none;">
+      <input type="email" id="add-contact-email" placeholder="Email" style="flex:2; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:8px 10px; font-size:0.82rem; color:#1C1C1E; outline:none;">
+    </div>
+    <button onclick="saveNewContact()" style="background:#1C1C1E; color:white; border:none; border-radius:8px; padding:9px; font-size:0.82rem; font-weight:700; cursor:pointer;">Ajouter le contact</button>
   </div>
 </div>
 
@@ -463,22 +475,25 @@ html, body {
     <button class="sheet-close" onclick="closeSettings()">✕</button>
   </div>
 
-  <div class="sheet-group-label">Email</div>
-  <div class="sheet-group">
-    <div class="sheet-row">
-      <label>Adresse destinataire</label>
-      <input class="sheet-input" type="email" id="ejs-to" placeholder="toi@exemple.com">
-    </div>
-  </div>
+
 
   <div class="sheet-group-label">GitHub</div>
-  <div class="sheet-group">
+  <div class="sheet-group" id="token-box">
     <div class="sheet-row">
       <label>Token GitHub</label>
       <input class="sheet-input" type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
     </div>
   </div>
-  <button class="sheet-btn btn-blue" onclick="saveConfig()">Sauvegarder</button>
+  <button class="sheet-btn btn-blue" id="save-btn" onclick="saveConfig()">Sauvegarder</button>
+
+  <div class="sheet-group-label">Horaires d'envoi (heure de Paris)</div>
+  <div class="sheet-group">
+    <div id="schedule-chips" style="display:flex; flex-wrap:wrap; gap:6px; padding:10px 14px; min-height:20px;"></div>
+    <div style="display:flex; gap:8px; padding:0 14px 12px; align-items:center;">
+      <input type="time" id="new-schedule" value="08:00" style="flex:1; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:9px; padding:9px 12px; font-size:0.85rem; color:#1C1C1E; outline:none;">
+      <button onclick="addScheduleConfig()" style="background:#1C1C1E; color:white; border:none; border-radius:9px; padding:9px 16px; font-size:0.85rem; font-weight:700; cursor:pointer; white-space:nowrap;">Ajouter</button>
+    </div>
+  </div>
 </div>
 
 <!-- EDIT OVERLAY -->
@@ -500,6 +515,15 @@ html, body {
       </select>
     </div>
     <div class="sheet-row"><label>Projet</label><input class="sheet-input" type="text" id="e-project" placeholder="Nom du projet"></div>
+    <div class="sheet-row" style="gap:6px;">
+      <label>Assigner à</label>
+      <select class="sheet-input" id="e-assignee" style="padding:6px 8px;" onchange="onAssigneeChange(this)"></select>
+    </div>
+    <div id="new-contact-form" style="display:none; padding:10px 14px; background:#F2F2F7; border-radius:8px; margin:0 0 8px; gap:6px; flex-direction:column;">
+      <input class="sheet-input" type="text" id="contact-name" placeholder="Nom du contact" style="margin-bottom:4px;">
+      <input class="sheet-input" type="email" id="contact-email" placeholder="email@exemple.com">
+      <button onclick="saveNewContact()" style="background:#1C1C1E;color:white;border:none;border-radius:8px;padding:8px;font-size:0.82rem;font-weight:700;cursor:pointer;margin-top:2px;">Ajouter le contact</button>
+    </div>
   </div>
   <button class="sheet-btn btn-blue" onclick="saveEdit()">Enregistrer</button>
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
@@ -512,20 +536,22 @@ window.emailjs = { init:function(){}, send:function(){ return Promise.reject({te
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" onerror="console.warn('EmailJS CDN indisponible')"></script>
 <script>
+const owner = 'napolsg';
+const repo  = 'taskmail';
+
 let tasks     = JSON.parse(localStorage.getItem('tm2_tasks')     || '[]');
 let schedules = JSON.parse(localStorage.getItem('tm2_schedules') || '["08:00","18:00"]');
 let config    = JSON.parse(localStorage.getItem('tm2_config')    || '{}');
 let log       = JSON.parse(localStorage.getItem('tm2_log')       || '[]');
+let deleted   = new Set(JSON.parse(localStorage.getItem('tm2_deleted') || '[]'));
+let contacts  = JSON.parse(localStorage.getItem('tm2_contacts') || '[]');
 let filter    = 'all';
 let editingId = null;
 let lastMin   = null;
 
 async function init() {
-  if (config.service)  document.getElementById('ejs-service').value  = config.service;
-  if (config.template) document.getElementById('ejs-template').value = config.template;
-  if (config.pubkey)   { document.getElementById('ejs-pubkey').value = config.pubkey; try { emailjs.init(config.pubkey); } catch(e){} }
-  if (config.to)       document.getElementById('ejs-to').value       = config.to;
-  if (config.ghToken)  document.getElementById('gh-token').value     = config.ghToken;
+  if (config.to && document.getElementById('ejs-to'))       document.getElementById('ejs-to').value       = config.to;
+  if (config.ghToken && document.getElementById('gh-token')) document.getElementById('gh-token').value = config.ghToken;
 
   // Affiche la liste immédiatement
   render();
@@ -538,14 +564,7 @@ async function init() {
   await syncFromGitHub(true);
   if (ind) ind.style.display = 'none';
 
-  if (!tasks.length) {
-    tasks = [
-      { id:1, title:'Revoir le rapport mensuel',   priority:'high',   project:'Finance',    done:false, created:new Date().toISOString() },
-      { id:2, title:'Appeler le client principal',  priority:'medium', project:'Commercial', done:false, created:new Date().toISOString() },
-      { id:3, title:'Préparer slides réunion',      priority:'low',    project:'',           done:true,  created:new Date().toISOString() },
-    ];
-    save();
-  }
+  // Pas de tâches par défaut
 
   setInterval(tickClock, 1000);
   setInterval(checkSchedules, 15000);
@@ -570,7 +589,7 @@ async function triggerFetchTasks() {
     await fetch('https://api.github.com/repos/napolsg/taskmail/actions/workflows/fetch-tasks.yml/dispatches', {
       method: 'POST',
       headers: {
-        'Authorization': `token ${config.ghToken}`,
+        'Authorization': 'token ' + sanitize(config.ghToken),
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
       },
@@ -588,7 +607,7 @@ async function syncFromGitHub(notify = false) {
     const url = 'https://api.github.com/repos/napolsg/taskmail/contents/tasks.json';
     const res = await fetch(url, {
       headers: {
-        'Authorization': `token ${config.ghToken}`,
+        'Authorization': 'token ' + sanitize(config.ghToken),
         'Accept': 'application/vnd.github.v3+json'
       }
     });
@@ -602,13 +621,12 @@ async function syncFromGitHub(notify = false) {
     const localIds  = new Set(tasks.map(t => String(t.id)));
     const remoteIds = new Set(remote.map(t => String(t.id)));
 
-    const newFromRemote = remote.filter(t => !localIds.has(String(t.id)));
+    // Ignore les tâches supprimées localement
+    const newFromRemote = remote.filter(t => !localIds.has(String(t.id)) && !deleted.has(String(t.id)));
     const onlyLocal     = tasks.filter(t => !remoteIds.has(String(t.id)));
 
     if (newFromRemote.length > 0 || onlyLocal.length > 0) {
-      // Merge : tâches GitHub + tâches locales non encore sur GitHub
       const merged = [...newFromRemote, ...tasks];
-      // Dédoublonne par id
       const seen = new Set();
       tasks = merged.filter(t => { const k = String(t.id); if (seen.has(k)) return false; seen.add(k); return true; });
       localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
@@ -641,17 +659,43 @@ function checkSchedules() {
 
 function updateNextSend() { /* désactivé */ }
 
+function sanitize(str) {
+  // Garde uniquement les caractères ASCII valides pour les headers HTTP
+  return (str || '').replace(/[^ -~]/g, '').trim();
+}
+
 function saveConfig() {
   config = {
-    service:  document.getElementById('ejs-service').value.trim(),
-    template: document.getElementById('ejs-template').value.trim(),
-    pubkey:   document.getElementById('ejs-pubkey').value.trim(),
-    to:       document.getElementById('ejs-to').value.trim(),
-    ghToken:  document.getElementById('gh-token').value.trim(),
+    ghToken: sanitize(document.getElementById('gh-token') ? document.getElementById('gh-token').value : (config.ghToken || '')),
   };
   localStorage.setItem('tm2_config', JSON.stringify(config));
-  if (config.pubkey) try { emailjs.init(config.pubkey); } catch(e) {}
   toast('Configuration sauvegardée', 'ok');
+  updateTokenUI();
+}
+
+function updateTokenUI() {
+  const box  = document.getElementById('token-box');
+  const btn  = document.getElementById('save-btn');
+  if (!box || !btn) return;
+  if (config.ghToken) {
+    box.style.display = 'none';
+    btn.textContent = 'Changer le token';
+    btn.onclick = showTokenInput;
+  } else {
+    box.style.display = 'block';
+    btn.textContent = 'Sauvegarder';
+    btn.onclick = saveConfig;
+  }
+}
+
+function showTokenInput() {
+  const box = document.getElementById('token-box');
+  const btn = document.getElementById('save-btn');
+  if (!box || !btn) return;
+  box.style.display = 'block';
+  document.getElementById('gh-token').value = '';
+  btn.textContent = 'Sauvegarder';
+  btn.onclick = saveConfig;
 }
 
 function sendMailto() {
@@ -660,35 +704,35 @@ function sendMailto() {
   const pending = tasks.filter(t => !t.done);
   if (!pending.length) { toast('Aucune tâche en attente', 'info'); return; }
   const pLabel = { high:'URGENT', medium:'Moyen', low:'Faible' };
-  const lines  = pending.map((t,i) => `${i+1}. [${pLabel[t.priority]}] ${t.title}${t.project?' — '+t.project:''}`).join('\n');
+  const lines  = pending.map((t,i) => `${i+1}. [${pLabel[t.priority]}] ${t.title}${t.project?' -- '+t.project:''}`).join('\n');
   const timeStr = new Date().toLocaleString('fr-FR');
-  const subject = encodeURIComponent(`TaskMail — ${pending.length} tâche(s) à faire`);
-  const body    = encodeURIComponent(`Bonjour,\n\nVos tâches du ${timeStr} :\n\n${lines}\n\n— TaskMail`);
+  const subject = encodeURIComponent(`TaskMail -- ${pending.length} tâche(s) à faire`);
+  const body    = encodeURIComponent(`Bonjour,\n\nVos tâches du ${timeStr} :\n\n${lines}\n\n-- TaskMail`);
   const a = document.createElement('a');
   a.href = `mailto:${to}?subject=${subject}&body=${body}`;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => document.body.removeChild(a), 200);
   addLog({ time: timeStr, status:'sent', count: pending.length });
-  toast(`Email préparé — ${pending.length} tâche(s)`, 'ok');
+  toast(`Email préparé -- ${pending.length} tâche(s)`, 'ok');
 }
 
 async function sendEmail(mode) {
   const pending = tasks.filter(t => !t.done);
   if (!pending.length) { if (mode !== 'auto') toast('Aucune tâche en attente', 'info'); return; }
   const pLabel = { high:'URGENT', medium:'Moyen', low:'Faible' };
-  const lines  = pending.map((t,i) => `${i+1}. [${pLabel[t.priority]}] ${t.title}${t.project?' — '+t.project:''}`).join('\n');
+  const lines  = pending.map((t,i) => `${i+1}. [${pLabel[t.priority]}] ${t.title}${t.project?' -- '+t.project:''}`).join('\n');
   const timeStr = new Date().toLocaleString('fr-FR');
   if (!config.service || !config.template || !config.pubkey || !config.to) {
     addLog({ time:timeStr, status:'sim', count:pending.length });
-    if (mode !== 'auto') toast('Mode simulation — configurez EmailJS', 'info');
+    if (mode !== 'auto') toast('Mode simulation -- configurez EmailJS', 'info');
     return;
   }
   try {
     await emailjs.send(config.service, config.template, {
       to_email:config.to, send_time:timeStr,
       task_count:pending.length, task_list:lines,
-      subject:`TaskMail — ${pending.length} tâche(s) à faire`,
+      subject:`TaskMail -- ${pending.length} tâche(s) à faire`,
     });
     addLog({ time:timeStr, status:'sent', count:pending.length });
     toast(`Email envoyé (${pending.length} tâches)`, 'ok');
@@ -744,9 +788,10 @@ function renderChips() {
 function addTask() {
   const title = document.getElementById('new-title').value.trim();
   if (!title) return;
-  tasks.unshift({ id:Date.now(), title, priority:document.getElementById('new-priority').value, project:document.getElementById('new-project').value.trim(), done:false, created:new Date().toISOString() });
+  tasks.unshift({ id:Date.now(), title, priority:document.getElementById('new-priority').value, project:document.getElementById('new-project').value.trim(), assignee:getAssigneeEmail(document.getElementById('new-assignee').value), done:false, created:new Date().toISOString() });
   document.getElementById('new-title').value = '';
   document.getElementById('new-project').value = '';
+  document.getElementById('new-assignee').value = '';
   save(); renderTasks(); updateStats(); tickClock();
 }
 
@@ -762,6 +807,20 @@ function openEdit(id) {
   document.getElementById('e-title').value    = t.title;
   document.getElementById('e-priority').value = t.priority;
   document.getElementById('e-project').value  = t.project || '';
+  populateAssigneeSelects();
+  const eAssign = document.getElementById('e-assignee');
+  if (eAssign) {
+    eAssign.value = t.assignee || '';
+    if (!eAssign.value && t.assignee) {
+      // email non trouvé dans les contacts — l'ajoute temporairement
+      const opt = document.createElement('option');
+      opt.value = t.assignee; opt.textContent = t.assignee;
+      eAssign.insertBefore(opt, eAssign.lastElementChild);
+      eAssign.value = t.assignee;
+    }
+  }
+  const form = document.getElementById('new-contact-form');
+  if (form) form.style.display = 'none';
   document.getElementById('e-overlay').classList.add('open');
   document.getElementById('e-sheet').classList.add('open');
 }
@@ -778,11 +837,14 @@ function saveEdit() {
   t.title    = document.getElementById('e-title').value.trim() || t.title;
   t.priority = document.getElementById('e-priority').value;
   t.project  = document.getElementById('e-project').value.trim();
+  t.assignee = getAssigneeEmail(document.getElementById('e-assignee')?.value || '');
   save(); renderTasks(); updateStats(); closeEdit();
   toast('Tâche mise à jour', 'ok');
 }
 
 function deleteEdit() {
+  deleted.add(String(editingId));
+  localStorage.setItem('tm2_deleted', JSON.stringify([...deleted]));
   tasks = tasks.filter(t => t.id!==editingId);
   save(); renderTasks(); updateStats(); tickClock(); closeEdit();
   toast('Tâche supprimée', 'info');
@@ -795,8 +857,6 @@ function save() {
 
 async function syncToGitHub() {
   if (!config.ghToken) return;
-  const owner = 'napolsg';
-  const repo  = 'taskmail';
   const path  = 'tasks.json';
   const url   = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
 
@@ -804,7 +864,7 @@ async function syncToGitHub() {
     // Get current file SHA
     const getRes = await fetch(url, {
       headers: {
-        'Authorization': `token ${config.ghToken}`,
+        'Authorization': 'token ' + sanitize(config.ghToken),
         'Accept': 'application/vnd.github.v3+json'
       }
     });
@@ -816,7 +876,7 @@ async function syncToGitHub() {
     await fetch(url, {
       method: 'PUT',
       headers: {
-        'Authorization': `token ${config.ghToken}`,
+        'Authorization': 'token ' + sanitize(config.ghToken),
         'Accept': 'application/vnd.github.v3+json',
         'Content-Type': 'application/json'
       },
@@ -873,6 +933,7 @@ function renderTasks() {
       <div class="task-body" onclick="openEdit(${t.id})">
         <div class="task-title">${esc(t.title)}</div>
         ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ''}
+        ${t.assignee ? `<div class="task-project" style="color:#2D5BE3;">→ ${esc(t.assignee)}</div>` : ''}
       </div>
       <button class="edit-btn" onclick="openEdit(${t.id})">✎</button>
     </div>
@@ -885,11 +946,155 @@ function updateStats() {
   const _sh2 = document.getElementById('s-high'); if(_sh2) _sh2.textContent = tasks.filter(t => t.priority==='high' && !t.done).length;
 }
 
-function render() { renderTasks(); updateStats(); renderChips(); renderLog(); updateNextSend(); }
+
+// -- SCHEDULES CONFIG ----------------------
+let remoteSchedules = [];
+
+async function loadSchedules() {
+  if (!config.ghToken) return;
+  try {
+    const url = `https://api.github.com/repos/napolsg/${repo}/contents/config.json`;
+    const res = await fetch(url, {
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const bytes = Uint8Array.from(atob(data.content.replace(/\s/g, '')), ch => ch.charCodeAt(0));
+    const cfg = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    remoteSchedules = cfg.schedules || [];
+    renderScheduleChipsConfig();
+  } catch(e) { console.warn('Chargement config échoué:', e.message); }
+}
+
+async function saveSchedules() {
+  if (!config.ghToken) { toast('Token GitHub requis', 'err'); return; }
+  try {
+    const url = `https://api.github.com/repos/napolsg/${repo}/contents/config.json`;
+    const getRes = await fetch(url, {
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' }
+    });
+    const getData = await getRes.json();
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify({ schedules: remoteSchedules }, null, 2))));
+    await fetch(url, {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'TaskMail: mise à jour des horaires', content, sha: getData.sha })
+    });
+    toast('Horaires sauvegardés', 'ok');
+  } catch(e) { toast('Erreur: ' + e.message, 'err'); }
+}
+
+function addScheduleConfig() {
+  const v = document.getElementById('new-schedule').value;
+  if (!v || remoteSchedules.includes(v)) { if (remoteSchedules.includes(v)) toast('Déjà ajouté', 'info'); return; }
+  remoteSchedules.push(v); remoteSchedules.sort();
+  renderScheduleChipsConfig();
+  saveSchedules();
+}
+
+function removeScheduleConfig(v) {
+  remoteSchedules = remoteSchedules.filter(s => s !== v);
+  renderScheduleChipsConfig();
+  saveSchedules();
+}
+
+function renderScheduleChipsConfig() {
+  const el = document.getElementById('schedule-chips');
+  if (!el) return;
+  if (!remoteSchedules.length) {
+    el.innerHTML = '<span style="font-size:0.78rem;color:#8E8E93;">Aucun horaire</span>';
+    return;
+  }
+  el.innerHTML = remoteSchedules.map(s => `
+    <div style="display:inline-flex;align-items:center;gap:5px;background:#EEF2FD;border:1.5px solid #2D5BE3;border-radius:20px;padding:5px 10px;font-size:0.78rem;color:#2D5BE3;">
+      <span style="font-family:monospace;">${s}</span>
+      <button onclick="removeScheduleConfig('${s}')" style="background:none;border:none;color:#2D5BE3;cursor:pointer;font-size:0.8rem;opacity:0.7;padding:0;line-height:1;">✕</button>
+    </div>
+  `).join('');
+}
+
+
+// ── CONTACTS ──────────────────────────────
+function saveContacts() {
+  localStorage.setItem('tm2_contacts', JSON.stringify(contacts));
+}
+
+function populateAssigneeSelects() {
+  const opts = `<option value="">-- Personne --</option>
+    <option value="__me__">Moi</option>
+    ${contacts.map(ct => `<option value="${ct.email}">${ct.name} (${ct.email})</option>`).join('')}
+    <option value="__new__">+ Nouveau contact</option>`;
+  ['new-assignee', 'e-assignee'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+function onAssigneeChange(sel) {
+  if (!sel) return;
+  // Formulaire dans la feuille d'édition
+  const editForm = document.getElementById('new-contact-form');
+  // Formulaire dans la barre d'ajout
+  const addForm  = document.getElementById('add-bar-contact-form');
+
+  if (sel.value === '__new__') {
+    if (sel.id === 'new-assignee' && addForm) {
+      addForm.style.display = 'flex';
+      addForm.style.flexDirection = 'column';
+      addForm.dataset.triggeredBy = sel.id;
+      if (editForm) editForm.style.display = 'none';
+    } else if (editForm) {
+      editForm.style.display = 'flex';
+      editForm.style.flexDirection = 'column';
+      editForm.dataset.triggeredBy = sel.id;
+      if (addForm) addForm.style.display = 'none';
+    }
+  } else {
+    if (editForm) editForm.style.display = 'none';
+    if (addForm)  addForm.style.display  = 'none';
+  }
+}
+
+function saveNewContact() {
+  // Lit depuis le formulaire visible (barre d'ajout ou feuille d'édition)
+  const addForm  = document.getElementById('add-bar-contact-form');
+  const fromAdd  = addForm && addForm.style.display !== 'none';
+  const nameId   = fromAdd ? 'add-contact-name'  : 'contact-name';
+  const emailId  = fromAdd ? 'add-contact-email' : 'contact-email';
+  const name  = (document.getElementById(nameId)?.value  || '').trim();
+  const email = (document.getElementById(emailId)?.value || '').trim();
+  if (!name || !email) { toast('Nom et email requis', 'err'); return; }
+  if (contacts.find(c => c.email === email)) { toast('Contact déjà existant', 'info'); return; }
+  contacts.push({ name, email });
+  saveContacts();
+  populateAssigneeSelects();
+  // Sélectionne le nouveau contact dans le bon select
+  const editForm2 = document.getElementById('new-contact-form');
+  const addForm2  = document.getElementById('add-bar-contact-form');
+  const fromAdd2  = addForm2 && addForm2.style.display !== 'none';
+  const triggeredBy = fromAdd2 ? (addForm2.dataset.triggeredBy || 'new-assignee') : (editForm2?.dataset.triggeredBy || 'e-assignee');
+  const sel = document.getElementById(triggeredBy);
+  if (sel) sel.value = email;
+  if (editForm2) editForm2.style.display = 'none';
+  if (addForm2)  addForm2.style.display  = 'none';
+  toast('Contact ' + name + ' ajouté', 'ok');
+}
+
+function getAssigneeEmail(val) {
+  if (!val || val === '--') return '';
+  if (val === '__me__') return config.ownerEmail || '';
+  if (val === '__new__') return '';
+  return val;
+}
+
+function render() { renderTasks(); updateStats(); renderChips(); renderLog(); updateNextSend(); populateAssigneeSelects(); }
 
 function openSettings() {
   document.getElementById('s-overlay').classList.add('open');
   document.getElementById('s-sheet').classList.add('open');
+  updateTokenUI();
+  loadSchedules();
+  populateAssigneeSelects();
 }
 function closeSettings() {
   document.getElementById('s-overlay').classList.remove('open');

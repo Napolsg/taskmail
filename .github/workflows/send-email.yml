@@ -1,15 +1,12 @@
-name: TaskMail
+name: Envoyer email tâches
 
 on:
   schedule:
-    - cron: '0 8 * * *'    # Email tâches à 8h
-    - cron: '0 18 * * *'   # Email tâches à 18h
-    - cron: '*/15 * * * *' # Vérifie nouveaux emails toutes les 15 min
+    - cron: '0 * * * *'  # toutes les heures
   workflow_dispatch:
 
 jobs:
-  send-email:
-    if: github.event.schedule == '0 8 * * *' || github.event.schedule == '0 18 * * *' || github.event_name == 'workflow_dispatch'
+  send:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -21,20 +18,5 @@ jobs:
         env:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
         run: node send.js
-
-  fetch-tasks:
-    if: github.event.schedule == '*/15 * * * *'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-      - run: npm install imap mailparser @octokit/rest
-      - name: Lire emails et créer tâches
-        env:
-          GMAIL_USER: ${{ secrets.GMAIL_USER }}
-          GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node fetch-tasks.js

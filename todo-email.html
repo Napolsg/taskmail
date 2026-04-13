@@ -572,14 +572,14 @@ window.emailjs = { init:function(){}, send:function(){ return Promise.reject({te
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" onerror="console.warn('EmailJS CDN indisponible')"></script>
 <script>
 const owner = 'napolsg';
-let repo = config.repo || 'taskmail-MA';
+const repo  = 'taskmail';
 
-let tasks     = JSON.parse(localStorage.getItem('tm_tasks_' + (config.repo || 'default'))     || '[]');
-let schedules = JSON.parse(localStorage.getItem('tm_schedules_' + (config.repo || 'default')) || '["08:00","18:00"]');
 let config    = JSON.parse(localStorage.getItem('tm2_config')    || '{}');
-let log       = JSON.parse(localStorage.getItem('tm_log_' + (config.repo || 'default'))       || '[]');
-let deleted   = new Set(JSON.parse(localStorage.getItem('tm_deleted_' + (config.repo || 'default')) || '[]'));
-let contacts  = JSON.parse(localStorage.getItem('tm_contacts_' + (config.repo || 'default')) || '[]');
+let tasks     = JSON.parse(localStorage.getItem('tm2_tasks')     || '[]');
+let schedules = JSON.parse(localStorage.getItem('tm2_schedules') || '["08:00","18:00"]');
+let log       = JSON.parse(localStorage.getItem('tm2_log')       || '[]');
+let deleted   = new Set(JSON.parse(localStorage.getItem('tm2_deleted') || '[]'));
+let contacts  = JSON.parse(localStorage.getItem('tm2_contacts')  || '[]');
 let filter    = 'all';
 let editingId = null;
 let lastMin   = null;
@@ -618,13 +618,13 @@ async function triggerFetchTasks() {
   if (!config.ghToken) return;
 
   // Ne déclenche pas si lancé il y a moins de 5 minutes
-  const lastTrigger = parseInt(localStorage.getItem('tm_last_trigger_' + (config.repo || 'default')) || '0');
+  const lastTrigger = parseInt(localStorage.getItem('tm2_last_trigger') || '0');
   const now = Date.now();
   if (now - lastTrigger < 5 * 60 * 1000) {
     console.log('Fetch-tasks ignoré (lancé il y a moins de 5 min)');
     return;
   }
-  localStorage.setItem('tm_last_trigger_' + (config.repo || 'default'), String(now));
+  localStorage.setItem('tm2_last_trigger', String(now));
 
   try {
     await fetch('https://api.github.com/repos/napolsg/taskmail/actions/workflows/fetch-tasks.yml/dispatches', {
@@ -677,7 +677,7 @@ async function syncFromGitHub(notify = false) {
       const merged = [...newFromRemote, ...tasks];
       const seen = new Set();
       tasks = merged.filter(t => { const k = String(t.id); if (seen.has(k)) return false; seen.add(k); return true; });
-      localStorage.setItem('tm_tasks_' + (config.repo || 'default'), JSON.stringify(tasks));
+      localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
       render();
       if (notify && newFromRemote.length > 0) {
         toast(newFromRemote.length + ' nouvelle(s) tâche(s) reçue(s)', 'ok');
@@ -796,7 +796,7 @@ function sendNow() { sendEmail('manual'); }
 
 function addLog(e) {
   log.unshift(e); if (log.length > 20) log.pop();
-  localStorage.setItem('tm_log_' + (config.repo || 'default'), JSON.stringify(log));
+  localStorage.setItem('tm2_log', JSON.stringify(log));
   renderLog();
 }
 
@@ -815,14 +815,14 @@ function addSchedule() {
   const v = document.getElementById('new-time').value;
   if (!v || schedules.includes(v)) { if(schedules.includes(v)) toast('Déjà ajouté','info'); return; }
   schedules.push(v); schedules.sort();
-  localStorage.setItem('tm_schedules_' + (config.repo || 'default'), JSON.stringify(schedules));
+  localStorage.setItem('tm2_schedules', JSON.stringify(schedules));
   renderChips(); updateNextSend();
   toast(`Horaire ${v} ajouté`, 'ok');
 }
 
 function removeSchedule(v) {
   schedules = schedules.filter(s => s !== v);
-  localStorage.setItem('tm_schedules_' + (config.repo || 'default'), JSON.stringify(schedules));
+  localStorage.setItem('tm2_schedules', JSON.stringify(schedules));
   renderChips(); updateNextSend();
 }
 
@@ -888,7 +888,7 @@ function saveEdit() {
 
 function deleteEdit() {
   deleted.add(String(editingId));
-  localStorage.setItem('tm_deleted_' + (config.repo || 'default'), JSON.stringify([...deleted]));
+  localStorage.setItem('tm2_deleted', JSON.stringify([...deleted]));
   tasks = tasks.filter(t => t.id!==editingId);
   save(); renderTasks(); updateStats(); tickClock(); closeEdit();
   toast('Tâche supprimée', 'info');
@@ -898,7 +898,7 @@ let githubLock = false;
 let pendingSync = false;
 
 function save() {
-  localStorage.setItem('tm_tasks_' + (config.repo || 'default'), JSON.stringify(tasks));
+  localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
   scheduleSyncToGitHub();
 }
 
@@ -1125,7 +1125,7 @@ function renderScheduleChipsConfig() {
 
 // ── CONTACTS ──────────────────────────────
 function saveContacts() {
-  localStorage.setItem('tm_contacts_' + (config.repo || 'default'), JSON.stringify(contacts));
+  localStorage.setItem('tm2_contacts', JSON.stringify(contacts));
 }
 
 function renderContactsList() {
@@ -1329,7 +1329,7 @@ function getContactByValue(val) {
 function clearDone() {
   const doneIds = tasks.filter(t => t.done).map(t => String(t.id));
   doneIds.forEach(id => deleted.add(id));
-  localStorage.setItem('tm_deleted_' + (config.repo || 'default'), JSON.stringify([...deleted]));
+  localStorage.setItem('tm2_deleted', JSON.stringify([...deleted]));
   tasks = tasks.filter(t => !t.done);
   save(); renderTasks(); updateStats(); tickClock();
   toast('Tâches faites supprimées', 'ok');

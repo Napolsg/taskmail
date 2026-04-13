@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">La To Do du Bonheur</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.5</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.6</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -572,21 +572,21 @@ window.emailjs = { init:function(){}, send:function(){ return Promise.reject({te
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" onerror="console.warn('EmailJS CDN indisponible')"></script>
 <script>
 const owner = 'napolsg';
-const repo  = 'taskmail';
+let repo = config.repo || 'taskmail-MA';
 
-let tasks     = JSON.parse(localStorage.getItem('tm2_tasks')     || '[]');
-let schedules = JSON.parse(localStorage.getItem('tm2_schedules') || '["08:00","18:00"]');
+let tasks     = JSON.parse(localStorage.getItem('tm_tasks_' + (config.repo || 'default'))     || '[]');
+let schedules = JSON.parse(localStorage.getItem('tm_schedules_' + (config.repo || 'default')) || '["08:00","18:00"]');
 let config    = JSON.parse(localStorage.getItem('tm2_config')    || '{}');
-let log       = JSON.parse(localStorage.getItem('tm2_log')       || '[]');
-let deleted   = new Set(JSON.parse(localStorage.getItem('tm2_deleted') || '[]'));
-let contacts  = JSON.parse(localStorage.getItem('tm2_contacts') || '[]');
+let log       = JSON.parse(localStorage.getItem('tm_log_' + (config.repo || 'default'))       || '[]');
+let deleted   = new Set(JSON.parse(localStorage.getItem('tm_deleted_' + (config.repo || 'default')) || '[]'));
+let contacts  = JSON.parse(localStorage.getItem('tm_contacts_' + (config.repo || 'default')) || '[]');
 let filter    = 'all';
 let editingId = null;
 let lastMin   = null;
 
 async function init() {
   if (config.to && document.getElementById('ejs-to'))       document.getElementById('ejs-to').value       = config.to;
-  if (config.ghToken && document.getElementById('gh-token')) document.getElementById('gh-token').value = config.ghToken;
+  if (config.ghToken   && document.getElementById('gh-token'))   document.getElementById('gh-token').value   = config.ghToken;
   if (config.ownerName && document.getElementById('owner-name')) document.getElementById('owner-name').value = config.ownerName;
 
   // Affiche la liste immédiatement
@@ -618,13 +618,13 @@ async function triggerFetchTasks() {
   if (!config.ghToken) return;
 
   // Ne déclenche pas si lancé il y a moins de 5 minutes
-  const lastTrigger = parseInt(localStorage.getItem('tm2_last_trigger') || '0');
+  const lastTrigger = parseInt(localStorage.getItem('tm_last_trigger_' + (config.repo || 'default')) || '0');
   const now = Date.now();
   if (now - lastTrigger < 5 * 60 * 1000) {
     console.log('Fetch-tasks ignoré (lancé il y a moins de 5 min)');
     return;
   }
-  localStorage.setItem('tm2_last_trigger', String(now));
+  localStorage.setItem('tm_last_trigger_' + (config.repo || 'default'), String(now));
 
   try {
     await fetch('https://api.github.com/repos/napolsg/taskmail/actions/workflows/fetch-tasks.yml/dispatches', {
@@ -656,13 +656,20 @@ async function syncFromGitHub(notify = false) {
     const data = await res.json();
     const binary = atob(data.content.replace(/\s/g, ''));
     const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
-    const remote = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    const parsed = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 
-    // Fusion : toutes les tâches locales + nouvelles de GitHub
+    // Support ancien format (array) et nouveau format (objet avec tasks + deletedIds)
+    const remote = Array.isArray(parsed) ? parsed : (parsed.tasks || []);
+    const remoteDeleted = Array.isArray(parsed) ? [] : (parsed.deletedIds || []);
+
+    // Fusionne les suppressions distantes avec les locales
+    remoteDeleted.forEach(id => deleted.add(String(id)));
+    localStorage.setItem('tm2_deleted', JSON.stringify([...deleted]));
+
     const localIds  = new Set(tasks.map(t => String(t.id)));
     const remoteIds = new Set(remote.map(t => String(t.id)));
 
-    // Ignore les tâches supprimées localement
+    // Ignore les tâches supprimées (localement ou à distance)
     const newFromRemote = remote.filter(t => !localIds.has(String(t.id)) && !deleted.has(String(t.id)));
     const onlyLocal     = tasks.filter(t => !remoteIds.has(String(t.id)));
 
@@ -670,7 +677,7 @@ async function syncFromGitHub(notify = false) {
       const merged = [...newFromRemote, ...tasks];
       const seen = new Set();
       tasks = merged.filter(t => { const k = String(t.id); if (seen.has(k)) return false; seen.add(k); return true; });
-      localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
+      localStorage.setItem('tm_tasks_' + (config.repo || 'default'), JSON.stringify(tasks));
       render();
       if (notify && newFromRemote.length > 0) {
         toast(newFromRemote.length + ' nouvelle(s) tâche(s) reçue(s)', 'ok');
@@ -708,7 +715,7 @@ function sanitize(str) {
 
 function saveConfig() {
   config = {
-    ghToken: sanitize(document.getElementById('gh-token') ? document.getElementById('gh-token').value : (config.ghToken || '')),
+    ghToken:   sanitize(document.getElementById('gh-token')    ? document.getElementById('gh-token').value    : (config.ghToken || '')),
     ownerName: document.getElementById('owner-name') ? document.getElementById('owner-name').value.trim() : (config.ownerName || ''),
   };
   localStorage.setItem('tm2_config', JSON.stringify(config));
@@ -789,7 +796,7 @@ function sendNow() { sendEmail('manual'); }
 
 function addLog(e) {
   log.unshift(e); if (log.length > 20) log.pop();
-  localStorage.setItem('tm2_log', JSON.stringify(log));
+  localStorage.setItem('tm_log_' + (config.repo || 'default'), JSON.stringify(log));
   renderLog();
 }
 
@@ -808,14 +815,14 @@ function addSchedule() {
   const v = document.getElementById('new-time').value;
   if (!v || schedules.includes(v)) { if(schedules.includes(v)) toast('Déjà ajouté','info'); return; }
   schedules.push(v); schedules.sort();
-  localStorage.setItem('tm2_schedules', JSON.stringify(schedules));
+  localStorage.setItem('tm_schedules_' + (config.repo || 'default'), JSON.stringify(schedules));
   renderChips(); updateNextSend();
   toast(`Horaire ${v} ajouté`, 'ok');
 }
 
 function removeSchedule(v) {
   schedules = schedules.filter(s => s !== v);
-  localStorage.setItem('tm2_schedules', JSON.stringify(schedules));
+  localStorage.setItem('tm_schedules_' + (config.repo || 'default'), JSON.stringify(schedules));
   renderChips(); updateNextSend();
 }
 
@@ -881,7 +888,7 @@ function saveEdit() {
 
 function deleteEdit() {
   deleted.add(String(editingId));
-  localStorage.setItem('tm2_deleted', JSON.stringify([...deleted]));
+  localStorage.setItem('tm_deleted_' + (config.repo || 'default'), JSON.stringify([...deleted]));
   tasks = tasks.filter(t => t.id!==editingId);
   save(); renderTasks(); updateStats(); tickClock(); closeEdit();
   toast('Tâche supprimée', 'info');
@@ -891,7 +898,7 @@ let githubLock = false;
 let pendingSync = false;
 
 function save() {
-  localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
+  localStorage.setItem('tm_tasks_' + (config.repo || 'default'), JSON.stringify(tasks));
   scheduleSyncToGitHub();
 }
 
@@ -931,7 +938,8 @@ async function pushAssignedTasks() {
       const data = await res.json();
       const binary = atob(data.content.replace(/\s/g, ''));
       const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
-      const remoteTasks = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+      const parsedRemote = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+      const remoteTasks = Array.isArray(parsedRemote) ? parsedRemote : (parsedRemote.tasks || []);
 
       const remoteIds = new Set(remoteTasks.map(t => String(t.id)));
       const newTasks = repoTasks.filter(t => !remoteIds.has(String(t.id))).map(t => ({
@@ -943,7 +951,7 @@ async function pushAssignedTasks() {
       if (!newTasks.length) { console.log('Push: rien de nouveau pour ' + targetRepo); continue; }
 
       const merged = [...newTasks, ...remoteTasks];
-      const content = btoa(unescape(encodeURIComponent(JSON.stringify(merged, null, 2))));
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify({ tasks: merged, deletedIds: [] }, null, 2))));
       const putRes = await fetch(url, {
         method: 'PUT',
         headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
@@ -971,7 +979,9 @@ async function syncToGitHub() {
     });
     if (!getRes.ok) return;
     const getData = await getRes.json();
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(tasks, null, 2))));
+    // Inclut la liste des suppressions pour sync entre appareils
+    const payload = { tasks, deletedIds: [...deleted] };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
     const putRes = await fetch(url, {
       method: 'PUT',
       headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
@@ -1115,7 +1125,7 @@ function renderScheduleChipsConfig() {
 
 // ── CONTACTS ──────────────────────────────
 function saveContacts() {
-  localStorage.setItem('tm2_contacts', JSON.stringify(contacts));
+  localStorage.setItem('tm_contacts_' + (config.repo || 'default'), JSON.stringify(contacts));
 }
 
 function renderContactsList() {
@@ -1319,7 +1329,7 @@ function getContactByValue(val) {
 function clearDone() {
   const doneIds = tasks.filter(t => t.done).map(t => String(t.id));
   doneIds.forEach(id => deleted.add(id));
-  localStorage.setItem('tm2_deleted', JSON.stringify([...deleted]));
+  localStorage.setItem('tm_deleted_' + (config.repo || 'default'), JSON.stringify([...deleted]));
   tasks = tasks.filter(t => !t.done);
   save(); renderTasks(); updateStats(); tickClock();
   toast('Tâches faites supprimées', 'ok');

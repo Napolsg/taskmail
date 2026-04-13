@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.2</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.3</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -488,6 +488,26 @@ html, body {
     </div>
   </div>
   <button class="sheet-btn btn-blue" id="save-btn" onclick="saveConfig()">Sauvegarder</button>
+
+  <div class="sheet-group-label">Contacts</div>
+  <div class="sheet-group" id="contacts-list"></div>
+  <button class="sheet-btn btn-gray" onclick="openAddContact()">+ Ajouter un contact</button>
+
+  <div id="contact-edit-form" style="display:none; margin:0 16px 12px; background:white; border-radius:14px; border:0.5px solid #E8E8E4; padding:14px;">
+    <div style="font-size:0.7rem; font-weight:700; color:#8E8E93; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:10px;" id="contact-form-title">Nouveau contact</div>
+    <input type="hidden" id="editing-contact-idx" value="-1">
+    <input class="sheet-input" type="text" id="cf-name" placeholder="Nom" style="margin-bottom:6px;">
+    <select id="cf-type" onchange="toggleContactType('cf')" class="sheet-input" style="margin-bottom:6px;">
+      <option value="repo">Dépôt GitHub</option>
+      <option value="email">Email</option>
+    </select>
+    <input class="sheet-input" type="text" id="cf-repo" placeholder="ex: taskmail-MA" style="margin-bottom:6px;">
+    <input class="sheet-input" type="email" id="cf-email" placeholder="email@exemple.com" style="display:none; margin-bottom:6px;">
+    <div style="display:flex; gap:6px;">
+      <button onclick="saveContactForm()" style="flex:1; background:#1C1C1E; color:white; border:none; border-radius:9px; padding:10px; font-size:0.85rem; font-weight:700; cursor:pointer;">Enregistrer</button>
+      <button onclick="cancelContactForm()" style="flex:1; background:#F2F2F7; color:#3C3C43; border:none; border-radius:9px; padding:10px; font-size:0.85rem; font-weight:600; cursor:pointer;">Annuler</button>
+    </div>
+  </div>
 
   <div class="sheet-group-label">Horaires d'envoi (heure de Paris)</div>
   <div class="sheet-group">
@@ -1021,6 +1041,90 @@ function saveContacts() {
   localStorage.setItem('tm2_contacts', JSON.stringify(contacts));
 }
 
+function renderContactsList() {
+  const el = document.getElementById('contacts-list');
+  if (!el) return;
+  if (!contacts.length) {
+    el.innerHTML = '<div style="padding:12px 14px; font-size:0.8rem; color:#8E8E93;">Aucun contact</div>';
+    return;
+  }
+  el.innerHTML = contacts.map((ct, i) => `
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border-bottom:0.5px solid #F2F2F7;">
+      <div>
+        <div style="font-size:0.88rem; font-weight:600; color:#1C1C1E;">${esc(ct.name)}</div>
+        <div style="font-size:0.72rem; color:#8E8E93;">${ct.repo ? 'GitHub: ' + ct.repo : ct.email || ''}</div>
+      </div>
+      <div style="display:flex; gap:4px;">
+        <button onclick="editContact(${i})" style="background:#F2F2F7; border:none; border-radius:7px; padding:5px 10px; font-size:0.75rem; color:#3C3C43; cursor:pointer;">✎</button>
+        <button onclick="deleteContact(${i})" style="background:#FDF0EE; border:none; border-radius:7px; padding:5px 10px; font-size:0.75rem; color:#C0392B; cursor:pointer;">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openAddContact() {
+  document.getElementById('contact-form-title').textContent = 'Nouveau contact';
+  document.getElementById('editing-contact-idx').value = '-1';
+  document.getElementById('cf-name').value = '';
+  document.getElementById('cf-repo').value = '';
+  document.getElementById('cf-email').value = '';
+  document.getElementById('cf-type').value = 'repo';
+  toggleContactType('cf');
+  document.getElementById('contact-edit-form').style.display = 'block';
+}
+
+function editContact(i) {
+  const ct = contacts[i];
+  if (!ct) return;
+  document.getElementById('contact-form-title').textContent = 'Modifier le contact';
+  document.getElementById('editing-contact-idx').value = i;
+  document.getElementById('cf-name').value = ct.name || '';
+  if (ct.repo) {
+    document.getElementById('cf-type').value = 'repo';
+    document.getElementById('cf-repo').value = ct.repo;
+    document.getElementById('cf-email').value = '';
+  } else {
+    document.getElementById('cf-type').value = 'email';
+    document.getElementById('cf-email').value = ct.email || '';
+    document.getElementById('cf-repo').value = '';
+  }
+  toggleContactType('cf');
+  document.getElementById('contact-edit-form').style.display = 'block';
+}
+
+function deleteContact(i) {
+  contacts.splice(i, 1);
+  saveContacts();
+  renderContactsList();
+  populateAssigneeSelects();
+  toast('Contact supprimé', 'info');
+}
+
+function saveContactForm() {
+  const name  = (document.getElementById('cf-name')?.value || '').trim();
+  const type  = document.getElementById('cf-type')?.value;
+  const repo  = (document.getElementById('cf-repo')?.value || '').trim();
+  const email = (document.getElementById('cf-email')?.value || '').trim();
+  if (!name) { toast('Nom requis', 'err'); return; }
+  if (!repo && !email) { toast('Dépôt ou email requis', 'err'); return; }
+  const ct = { name, repo: type === 'repo' ? repo : '', email: type === 'email' ? email : '' };
+  const idx = parseInt(document.getElementById('editing-contact-idx').value);
+  if (idx >= 0) {
+    contacts[idx] = ct;
+  } else {
+    contacts.push(ct);
+  }
+  saveContacts();
+  renderContactsList();
+  populateAssigneeSelects();
+  cancelContactForm();
+  toast((idx >= 0 ? 'Contact modifié' : 'Contact ajouté'), 'ok');
+}
+
+function cancelContactForm() {
+  document.getElementById('contact-edit-form').style.display = 'none';
+}
+
 function populateAssigneeSelects() {
   const opts = `<option value="">-- Personne --</option>
     <option value="__me__">Moi</option>
@@ -1033,10 +1137,17 @@ function populateAssigneeSelects() {
 }
 
 function toggleContactType(context) {
-  const prefix = context === 'add' ? 'add-' : '';
-  const type   = document.getElementById(prefix + 'contact-type')?.value;
-  const repo   = document.getElementById(prefix + 'contact-repo');
-  const email  = document.getElementById(prefix + 'contact-email');
+  let typeId, repoId, emailId;
+  if (context === 'add') {
+    typeId = 'add-contact-type'; repoId = 'add-contact-repo'; emailId = 'add-contact-email';
+  } else if (context === 'cf') {
+    typeId = 'cf-type'; repoId = 'cf-repo'; emailId = 'cf-email';
+  } else {
+    typeId = 'contact-type'; repoId = 'contact-repo'; emailId = 'contact-email';
+  }
+  const type  = document.getElementById(typeId)?.value;
+  const repo  = document.getElementById(repoId);
+  const email = document.getElementById(emailId);
   if (!repo || !email) return;
   if (type === 'repo') {
     repo.style.display  = 'block';
@@ -1132,6 +1243,7 @@ function openSettings() {
   updateTokenUI();
   loadSchedules();
   populateAssigneeSelects();
+  renderContactsList();
 }
 function closeSettings() {
   document.getElementById('s-overlay').classList.remove('open');

@@ -524,6 +524,10 @@ async function init() {
   if (config.to)       document.getElementById('ejs-to').value       = config.to;
   if (config.ghToken)  document.getElementById('gh-token').value     = config.ghToken;
 
+  // Déclenche fetch-tasks pour récupérer les nouveaux emails
+  await triggerFetchTasks();
+  // Attend 5 secondes que le workflow démarre, puis sync
+  await new Promise(r => setTimeout(r, 5000));
   // Sync depuis GitHub avant le premier affichage
   await syncFromGitHub(true);
 
@@ -542,6 +546,34 @@ async function init() {
   // Sync depuis GitHub toutes les 2 minutes (silencieuse)
   setInterval(() => syncFromGitHub(false), 120000);
   tickClock(); checkSchedules();
+}
+
+async function triggerFetchTasks() {
+  if (!config.ghToken) return;
+
+  // Ne déclenche pas si lancé il y a moins de 5 minutes
+  const lastTrigger = parseInt(localStorage.getItem('tm2_last_trigger') || '0');
+  const now = Date.now();
+  if (now - lastTrigger < 5 * 60 * 1000) {
+    console.log('Fetch-tasks ignoré (lancé il y a moins de 5 min)');
+    return;
+  }
+  localStorage.setItem('tm2_last_trigger', String(now));
+
+  try {
+    await fetch('https://api.github.com/repos/napolsg/taskmail/actions/workflows/fetch-tasks.yml/dispatches', {
+      method: 'POST',
+      headers: {
+        'Authorization': `token ${config.ghToken}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ref: 'main' })
+    });
+    console.log('Workflow fetch-tasks déclenché');
+  } catch(e) {
+    console.warn('Déclenchement workflow échoué:', e.message);
+  }
 }
 
 async function syncFromGitHub(notify = false) {

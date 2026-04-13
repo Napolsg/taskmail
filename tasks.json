@@ -1,5 +1,93 @@
 [
   {
+    "id": 1776072841229.5537,
+    "title": "[Napolsg/taskmail] Récupérer tâches par email workflow run",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.7097,
+    "title": "Repository: Napolsg/taskmail",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.6333,
+    "title": "Workflow: Récupérer tâches par email",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.0217,
+    "title": "Duration: 25.0 seconds",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.9353,
+    "title": "Finished: 2026-04-13 09:30:10 UTC",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.6724,
+    "title": "View results: https://github.com/Napolsg/taskmail/actions/runs/24336085763",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.4592,
+    "title": "Jobs:",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.9534,
+    "title": "* fetch-tasks failed (2 annotations)",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.7068,
+    "title": "-",
+    "priority": "low",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.6155,
+    "title": "You are receiving this because you are subscribed to this thread.",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
+    "id": 1776072841229.056,
+    "title": "Manage your GitHub Actions notifications: https://github.com/settings/notifications",
+    "priority": "medium",
+    "project": "",
+    "done": false,
+    "created": "2026-04-13T09:34:01.229Z"
+  },
+  {
     "id": 1776071305865,
     "title": "tesgkj",
     "priority": "medium",

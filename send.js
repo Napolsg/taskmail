@@ -56,6 +56,7 @@ function buildHTML(taskList, recipientLabel) {
           <span style="background:${pBg[t.priority]};color:${pColor[t.priority]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;">${pLabel[t.priority]}</span>
           <span style="font-size:14px;color:#1C1C1E;font-weight:500;">${t.title}</span>
           ${t.project ? `<span style="font-size:11px;color:#8E8E93;">-- ${t.project}</span>` : ''}
+          ${t.assignedBy ? `<span style="font-size:11px;color:#185FA5;">Assigné par : ${t.assignedBy}</span>` : ''}
         </div>
       </td>
     </tr>`).join('');
@@ -99,8 +100,13 @@ function sendMail(to, subject, html) {
   const pending = tasks.filter(t => !t.done);
   if (!pending.length) { console.log('Aucune tache en attente'); process.exit(0); }
 
-  // Email au propriétaire : tâches sans assigné ou assignées à lui-même
-  const ownerTasks = pending.filter(t => !t.assignee || t.assignee === process.env.GMAIL_USER);
+  // Toutes les tâches vont au propriétaire (y compris celles assignées par quelqu'un d'autre)
+  const ownerTasks = pending.filter(t =>
+    !t.assignee ||                              // pas d'assigné email
+    t.assignee === process.env.GMAIL_USER ||    // assigné à soi-même
+    t.assignedBy                                // reçue d'un autre dépôt
+  );
+
   if (ownerTasks.length) {
     await sendMail(
       process.env.GMAIL_USER,
@@ -110,10 +116,10 @@ function sendMail(to, subject, html) {
     console.log(`Email envoye au proprietaire (${ownerTasks.length} taches)`);
   }
 
-  // Emails aux assignés groupés par adresse
+  // Emails aux assignés avec email uniquement (pas ceux avec dépôt GitHub)
   const byAssignee = {};
   pending
-    .filter(t => t.assignee && t.assignee !== process.env.GMAIL_USER)
+    .filter(t => t.assignee && t.assignee !== process.env.GMAIL_USER && !t.assignedBy)
     .forEach(t => {
       if (!byAssignee[t.assignee]) byAssignee[t.assignee] = [];
       byAssignee[t.assignee].push(t);

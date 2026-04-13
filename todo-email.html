@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.0</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.2</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -796,7 +796,7 @@ function renderChips() {
 function addTask() {
   const title = document.getElementById('new-title').value.trim();
   if (!title) return;
-  tasks.unshift({ id:Date.now(), title, priority:document.getElementById('new-priority').value, project:document.getElementById('new-project').value.trim(), assignee:getAssigneeEmail(document.getElementById('new-assignee').value), done:false, created:new Date().toISOString() });
+  tasks.unshift({ id:Date.now(), title, priority:document.getElementById('new-priority').value, project:document.getElementById('new-project').value.trim(), assignee:getAssigneeEmail(document.getElementById('new-assignee').value), assigneeRef: document.getElementById('new-assignee').value, done:false, created:new Date().toISOString() });
   document.getElementById('new-title').value = '';
   document.getElementById('new-project').value = '';
   document.getElementById('new-assignee').value = '';
@@ -818,14 +818,7 @@ function openEdit(id) {
   populateAssigneeSelects();
   const eAssign = document.getElementById('e-assignee');
   if (eAssign) {
-    eAssign.value = t.assignee || '';
-    if (!eAssign.value && t.assignee) {
-      // email non trouvé dans les contacts — l'ajoute temporairement
-      const opt = document.createElement('option');
-      opt.value = t.assignee; opt.textContent = t.assignee;
-      eAssign.insertBefore(opt, eAssign.lastElementChild);
-      eAssign.value = t.assignee;
-    }
+    eAssign.value = t.assigneeRef || t.assignee || '';
   }
   const form = document.getElementById('new-contact-form');
   if (form) form.style.display = 'none';
@@ -845,7 +838,8 @@ function saveEdit() {
   t.title    = document.getElementById('e-title').value.trim() || t.title;
   t.priority = document.getElementById('e-priority').value;
   t.project  = document.getElementById('e-project').value.trim();
-  t.assignee = getAssigneeEmail(document.getElementById('e-assignee')?.value || '');
+  t.assignee    = getAssigneeEmail(document.getElementById('e-assignee')?.value || '');
+  t.assigneeRef = document.getElementById('e-assignee')?.value || '';
   save(); renderTasks(); updateStats(); closeEdit();
   toast('Tâche mise à jour', 'ok');
 }
@@ -941,7 +935,7 @@ function renderTasks() {
       <div class="task-body" onclick="openEdit(${t.id})">
         <div class="task-title">${esc(t.title)}</div>
         ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ''}
-        ${t.assignee ? `<div class="task-project" style="color:#2D5BE3;">→ ${esc(t.assignee)}</div>` : ''}
+        ${t.assignee ? '<div class="task-project" style="color:#2D5BE3;">→ ' + esc(getAssigneeLabel(t)) + '</div>' : ''}
       </div>
       <button class="edit-btn" onclick="openEdit(${t.id})">✎</button>
     </div>
@@ -1105,10 +1099,29 @@ function saveNewContact() {
 }
 
 function getAssigneeEmail(val) {
-  if (!val || val === '--') return '';
+  if (!val || val === '--' || val === '' ) return '';
   if (val === '__me__') return config.ownerEmail || '';
   if (val === '__new__') return '';
+  if (val.startsWith('__contact_')) {
+    const idx = parseInt(val.replace('__contact_', '').replace('__', ''));
+    const ct = contacts[idx];
+    if (!ct) return '';
+    return ct.email || ct.repo || '';
+  }
   return val;
+}
+
+function getAssigneeLabel(t) {
+  if (!t.assigneeRef || !t.assigneeRef.startsWith('__contact_')) return t.assignee || '';
+  const ct = getContactByValue(t.assigneeRef);
+  if (!ct) return t.assignee || '';
+  return ct.name + (ct.repo ? ' (' + ct.repo + ')' : ct.email ? ' (' + ct.email + ')' : '');
+}
+
+function getContactByValue(val) {
+  if (!val || !val.startsWith('__contact_')) return null;
+  const idx = parseInt(val.replace('__contact_', '').replace('__', ''));
+  return contacts[idx] || null;
 }
 
 function render() { renderTasks(); updateStats(); renderChips(); renderLog(); updateNextSend(); populateAssigneeSelects(); }

@@ -70,7 +70,7 @@
     "title": "Faire deux taches",
     "priority": "medium",
     "project": "",
-    "done": false,
+    "done": true,
     "created": "2026-04-13T10:00:18.083Z",
     "assignee": "taskmail-MA",
     "assigneeRef": "__contact_0__"

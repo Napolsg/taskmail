@@ -1,7 +1,9 @@
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 
-const tasks  = JSON.parse(fs.readFileSync('tasks.json', 'utf8'));
+const raw    = JSON.parse(fs.readFileSync('tasks.json', 'utf8'));
+const tasks  = Array.isArray(raw) ? raw : (raw.tasks || []);
+const deletedIds = new Set(Array.isArray(raw) ? [] : (raw.deletedIds || []));
 const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
 const now  = new Date();
@@ -97,7 +99,7 @@ function sendMail(to, subject, html) {
 }
 
 (async () => {
-  const pending = tasks.filter(t => !t.done);
+  const pending = tasks.filter(t => !t.done && !deletedIds.has(String(t.id)));
   if (!pending.length) { console.log('Aucune tache en attente'); process.exit(0); }
 
   // Toutes les tâches vont au propriétaire (y compris celles assignées par quelqu'un d'autre)

@@ -524,8 +524,8 @@ async function init() {
   if (config.to)       document.getElementById('ejs-to').value       = config.to;
   if (config.ghToken)  document.getElementById('gh-token').value     = config.ghToken;
 
-  // Sync depuis GitHub au chargement
-  await syncFromGitHub();
+  // Sync depuis GitHub avant le premier affichage
+  await syncFromGitHub(true);
 
   if (!tasks.length) {
     tasks = [
@@ -539,12 +539,12 @@ async function init() {
   render();
   setInterval(tickClock, 1000);
   setInterval(checkSchedules, 15000);
-  // Sync depuis GitHub toutes les 2 minutes
-  setInterval(syncFromGitHub, 120000);
+  // Sync depuis GitHub toutes les 2 minutes (silencieuse)
+  setInterval(() => syncFromGitHub(false), 120000);
   tickClock(); checkSchedules();
 }
 
-async function syncFromGitHub() {
+async function syncFromGitHub(notify = false) {
   if (!config.ghToken) return;
   try {
     const url = 'https://api.github.com/repos/napolsg/taskmail/contents/tasks.json';
@@ -558,16 +558,24 @@ async function syncFromGitHub() {
     const data = await res.json();
     const remote = JSON.parse(atob(data.content));
 
-    // Fusion : garde toutes les tâches locales + ajoute les nouvelles de GitHub
-    const localIds = new Set(tasks.map(t => String(t.id)));
-    const newFromRemote = remote.filter(t => !localIds.has(String(t.id)));
+    // Fusion : toutes les tâches locales + nouvelles de GitHub
+    const localIds  = new Set(tasks.map(t => String(t.id)));
+    const remoteIds = new Set(remote.map(t => String(t.id)));
 
-    if (newFromRemote.length > 0) {
-      tasks = [...newFromRemote, ...tasks];
+    const newFromRemote = remote.filter(t => !localIds.has(String(t.id)));
+    const onlyLocal     = tasks.filter(t => !remoteIds.has(String(t.id)));
+
+    if (newFromRemote.length > 0 || onlyLocal.length > 0) {
+      // Merge : tâches GitHub + tâches locales non encore sur GitHub
+      const merged = [...newFromRemote, ...tasks];
+      // Dédoublonne par id
+      const seen = new Set();
+      tasks = merged.filter(t => { const k = String(t.id); if (seen.has(k)) return false; seen.add(k); return true; });
       localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
       render();
-      toast(`${newFromRemote.length} nouvelle(s) tâche(s) reçue(s)`, 'ok');
-      console.log('Nouvelles tâches depuis GitHub:', newFromRemote.map(t => t.title));
+      if (notify && newFromRemote.length > 0) {
+        toast(`${newFromRemote.length} nouvelle(s) tâche(s) reçue(s)`, 'ok');
+      }
     }
   } catch(e) {
     console.warn('Sync depuis GitHub échoué:', e.message);

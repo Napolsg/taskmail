@@ -557,11 +557,17 @@ async function syncFromGitHub() {
     if (!res.ok) return;
     const data = await res.json();
     const remote = JSON.parse(atob(data.content));
-    if (JSON.stringify(remote) !== JSON.stringify(tasks)) {
-      tasks = remote;
+
+    // Fusion : garde toutes les tâches locales + ajoute les nouvelles de GitHub
+    const localIds = new Set(tasks.map(t => String(t.id)));
+    const newFromRemote = remote.filter(t => !localIds.has(String(t.id)));
+
+    if (newFromRemote.length > 0) {
+      tasks = [...newFromRemote, ...tasks];
       localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
       render();
-      console.log('Tâches synchronisées depuis GitHub');
+      toast(`${newFromRemote.length} nouvelle(s) tâche(s) reçue(s)`, 'ok');
+      console.log('Nouvelles tâches depuis GitHub:', newFromRemote.map(t => t.title));
     }
   } catch(e) {
     console.warn('Sync depuis GitHub échoué:', e.message);
@@ -698,6 +704,7 @@ function removeSchedule(v) {
 
 function renderChips() {
   const el = document.getElementById('chip-list');
+  if (!el) return; // element removed from UI
   if (!schedules.length) { el.innerHTML = '<span style="font-size:0.78rem;color:#C7C7CC;padding:2px">Aucun horaire</span>'; return; }
   el.innerHTML = schedules.map(s =>
     `<div class="chip">${s}<button class="chip-x" onclick="removeSchedule('${s}')">✕</button></div>`

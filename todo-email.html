@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.0</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.2</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -595,7 +595,7 @@ async function init() {
   await triggerFetchTasks();
   await new Promise(r => setTimeout(r, 5000));
   await syncFromGitHub(true);
-  await pushAssignedTasks();
+  scheduleSyncToGitHub();
   if (ind) ind.style.display = 'none';
 
   // Pas de tâches par défaut
@@ -668,8 +668,7 @@ async function syncFromGitHub(notify = false) {
       if (notify && newFromRemote.length > 0) {
         toast(newFromRemote.length + ' nouvelle(s) tâche(s) reçue(s)', 'ok');
       }
-      // Pousse les tâches assignées vers les autres dépôts
-      await pushAssignedTasks();
+
     }
   } catch(e) {
     console.warn('Sync depuis GitHub échoué:', e.message);
@@ -881,10 +880,22 @@ function deleteEdit() {
   toast('Tâche supprimée', 'info');
 }
 
+let githubLock = false;
+let pendingSync = false;
+
 function save() {
   localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
-  syncToGitHub();
-  pushAssignedTasks();
+  scheduleSyncToGitHub();
+}
+
+function scheduleSyncToGitHub() {
+  if (githubLock) { pendingSync = true; return; }
+  githubLock = true;
+  syncToGitHub().finally(async () => {
+    await pushAssignedTasks();
+    githubLock = false;
+    if (pendingSync) { pendingSync = false; scheduleSyncToGitHub(); }
+  });
 }
 
 async function pushAssignedTasks() {
@@ -904,11 +915,10 @@ async function pushAssignedTasks() {
   for (const [targetRepo, repoTasks] of Object.entries(byRepo)) {
     try {
       const url = 'https://api.github.com/repos/napolsg/' + targetRepo + '/contents/tasks.json';
+      // Re-lit le SHA juste avant d'écrire pour éviter les conflits 409
       const res = await fetch(url, {
-        headers: {
-          'Authorization': 'token ' + sanitize(config.ghToken),
-          'Accept': 'application/vnd.github.v3+json'
-        }
+        headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' },
+        cache: 'no-cache'
       });
       if (!res.ok) { console.warn('Push: dépôt ' + targetRepo + ' inaccessible'); continue; }
       const data = await res.json();
@@ -916,31 +926,25 @@ async function pushAssignedTasks() {
       const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
       const remoteTasks = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 
-      // Ajoute uniquement les tâches pas encore présentes
       const remoteIds = new Set(remoteTasks.map(t => String(t.id)));
       const newTasks = repoTasks.filter(t => !remoteIds.has(String(t.id))).map(t => ({
         ...t,
-        assignedBy: config.ownerName || repo,  // marque l'origine
-        assigneeRef: '',   // reset la ref locale
-        assignee: ''       // reset l'assigné (c'est maintenant le destinataire)
+        assignedBy: config.ownerName || repo,
+        assigneeRef: '',
+        assignee: ''
       }));
       if (!newTasks.length) { console.log('Push: rien de nouveau pour ' + targetRepo); continue; }
 
       const merged = [...newTasks, ...remoteTasks];
       const content = btoa(unescape(encodeURIComponent(JSON.stringify(merged, null, 2))));
-      await fetch(url, {
+      const putRes = await fetch(url, {
         method: 'PUT',
-        headers: {
-          'Authorization': 'token ' + sanitize(config.ghToken),
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: 'TaskMail: tache assignee depuis ' + repo,
-          content,
-          sha: data.sha
-        })
+        headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'TaskMail: tache assignee depuis ' + repo, content, sha: data.sha })
       });
+      if (putRes.status === 409) {
+        console.warn('Conflit 409 sur ' + targetRepo + ' - sera retenté au prochain cycle');
+      }
       console.log('Taches poussees vers ' + targetRepo + ' : ' + newTasks.map(t => t.title).join(', '));
       toast(newTasks.length + ' tâche(s) envoyée(s) vers ' + targetRepo, 'ok');
     } catch(e) {
@@ -967,13 +971,10 @@ async function syncToGitHub() {
       body: JSON.stringify({ message: 'TaskMail: mise a jour des taches', content, sha: getData.sha })
     });
     if (putRes.status === 409) {
-      // Réessaie une fois en cas de conflit
-      console.warn('Conflit 409 - réessai...');
-      setTimeout(syncToGitHub, 2000);
+      console.warn('Conflit 409 sur syncToGitHub - sera retenté');
       return;
     }
     console.log('Taches synchronisees sur GitHub');
-    await pushAssignedTasks();
   } catch(e) {
     console.warn('Sync GitHub échoué:', e.message);
   }

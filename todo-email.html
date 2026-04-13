@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.5</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.8</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -482,6 +482,10 @@ html, body {
 
   <div class="sheet-group-label">GitHub</div>
   <div class="sheet-group" id="token-box">
+    <div class="sheet-row">
+      <label>Votre nom</label>
+      <input class="sheet-input" type="text" id="owner-name" placeholder="ex: Louis">
+    </div>
     <div class="sheet-row">
       <label>Token GitHub</label>
       <input class="sheet-input" type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
@@ -580,6 +584,7 @@ let lastMin   = null;
 async function init() {
   if (config.to && document.getElementById('ejs-to'))       document.getElementById('ejs-to').value       = config.to;
   if (config.ghToken && document.getElementById('gh-token')) document.getElementById('gh-token').value = config.ghToken;
+  if (config.ownerName && document.getElementById('owner-name')) document.getElementById('owner-name').value = config.ownerName;
 
   // Affiche la liste immédiatement
   render();
@@ -660,8 +665,10 @@ async function syncFromGitHub(notify = false) {
       localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
       render();
       if (notify && newFromRemote.length > 0) {
-        toast(`${newFromRemote.length} nouvelle(s) tâche(s) reçue(s)`, 'ok');
+        toast(newFromRemote.length + ' nouvelle(s) tâche(s) reçue(s)', 'ok');
       }
+      // Pousse les tâches assignées vers les autres dépôts
+      await pushAssignedTasks();
     }
   } catch(e) {
     console.warn('Sync depuis GitHub échoué:', e.message);
@@ -695,6 +702,7 @@ function sanitize(str) {
 function saveConfig() {
   config = {
     ghToken: sanitize(document.getElementById('gh-token') ? document.getElementById('gh-token').value : (config.ghToken || '')),
+    ownerName: document.getElementById('owner-name') ? document.getElementById('owner-name').value.trim() : (config.ownerName || ''),
   };
   localStorage.setItem('tm2_config', JSON.stringify(config));
   toast('Configuration sauvegardée', 'ok');
@@ -909,7 +917,12 @@ async function pushAssignedTasks() {
 
       // Ajoute uniquement les tâches pas encore présentes
       const remoteIds = new Set(remoteTasks.map(t => String(t.id)));
-      const newTasks  = repoTasks.filter(t => !remoteIds.has(String(t.id)));
+      const newTasks = repoTasks.filter(t => !remoteIds.has(String(t.id))).map(t => ({
+        ...t,
+        assignedBy: config.ownerName || repo,  // marque l'origine
+        assigneeRef: '',   // reset la ref locale
+        assignee: ''       // reset l'assigné (c'est maintenant le destinataire)
+      }));
       if (!newTasks.length) { console.log('Push: rien de nouveau pour ' + targetRepo); continue; }
 
       const merged = [...newTasks, ...remoteTasks];
@@ -937,36 +950,21 @@ async function pushAssignedTasks() {
 
 async function syncToGitHub() {
   if (!config.ghToken) return;
-  const path  = 'tasks.json';
-  const url   = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-
+  const url = 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/tasks.json';
   try {
-    // Get current file SHA
     const getRes = await fetch(url, {
-      headers: {
-        'Authorization': 'token ' + sanitize(config.ghToken),
-        'Accept': 'application/vnd.github.v3+json'
-      }
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' }
     });
     const getData = await getRes.json();
-    const sha = getData.sha;
-
-    // Update file
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(tasks, null, 2))));
     await fetch(url, {
       method: 'PUT',
-      headers: {
-        'Authorization': 'token ' + sanitize(config.ghToken),
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: 'TaskMail: mise à jour des tâches',
-        content,
-        sha
-      })
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'TaskMail: mise a jour des taches', content, sha: getData.sha })
     });
-    console.log('Tâches synchronisées sur GitHub');
+    console.log('Taches synchronisees sur GitHub');
+    // Pousse aussi les tâches assignées vers les autres dépôts
+    await pushAssignedTasks();
   } catch(e) {
     console.warn('Sync GitHub échoué:', e.message);
   }
@@ -1013,7 +1011,8 @@ function renderTasks() {
       <div class="task-body" onclick="openEdit(${t.id})">
         <div class="task-title">${esc(t.title)}</div>
         ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ''}
-        ${t.assignee ? '<div class="task-project" style="color:#2D5BE3;">→ ' + esc(getAssigneeLabel(t)) + '</div>' : ''}
+        ${t.assignee && t.assigneeRef ? '<div class="task-project" style="color:#2D5BE3;">Assigné à : ' + esc(getAssigneeLabel(t)) + '</div>' : ''}
+        ${t.assignedBy ? '<div class="task-project" style="color:#2eb88a;">Assigné par : ' + esc(t.assignedBy) + '</div>' : ''}
       </div>
       <button class="edit-btn" onclick="openEdit(${t.id})">✎</button>
     </div>

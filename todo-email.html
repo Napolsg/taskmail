@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v2.6</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.0</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -456,13 +456,16 @@ html, body {
     <input class="add-sel" type="text" id="new-project" placeholder="Projet…" style="font-size:0.82rem; flex:1; min-width:0;">
     <select class="add-sel" id="new-assignee" style="font-size:0.82rem; flex:1; min-width:0;" onchange="onAssigneeChange(this)"></select>
   </div>
-  <div id="add-bar-contact-form" style="display:none; flex-direction:column; gap:6px; margin-top:8px; padding:10px 12px; background:white; border-radius:10px; border:1px solid #E8E8E4;">
-    <div style="font-size:0.75rem; font-weight:600; color:#6C6C68; margin-bottom:2px;">Nouveau contact</div>
-    <div style="display:flex; gap:6px;">
-      <input type="text" id="add-contact-name" placeholder="Nom" style="flex:1; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:8px 10px; font-size:0.82rem; color:#1C1C1E; outline:none;">
-      <input type="email" id="add-contact-email" placeholder="Email" style="flex:2; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:8px 10px; font-size:0.82rem; color:#1C1C1E; outline:none;">
-    </div>
-    <button onclick="saveNewContact()" style="background:#1C1C1E; color:white; border:none; border-radius:8px; padding:9px; font-size:0.82rem; font-weight:700; cursor:pointer;">Ajouter le contact</button>
+  <div id="add-bar-contact-form" style="display:none; margin-top:8px; padding:12px; background:white; border-radius:10px; border:1px solid #E8E8E4;">
+    <div style="font-size:0.75rem; font-weight:700; color:#6C6C68; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Nouveau contact</div>
+    <input type="text" id="add-contact-name" placeholder="Nom" style="width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
+    <select id="add-contact-type" onchange="toggleContactType('add')" style="width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
+      <option value="repo">Dépôt GitHub</option>
+      <option value="email">Email</option>
+    </select>
+    <input type="text" id="add-contact-repo" placeholder="ex: taskmail-MA" style="width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
+    <input type="email" id="add-contact-email" placeholder="email@exemple.com" style="display:none; width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
+    <button onclick="saveNewContact()" style="width:100%; background:#1C1C1E; color:white; border:none; border-radius:8px; padding:10px; font-size:0.85rem; font-weight:700; cursor:pointer;">Ajouter</button>
   </div>
 </div>
 
@@ -520,8 +523,13 @@ html, body {
       <select class="sheet-input" id="e-assignee" style="padding:6px 8px;" onchange="onAssigneeChange(this)"></select>
     </div>
     <div id="new-contact-form" style="display:none; padding:10px 14px; background:#F2F2F7; border-radius:8px; margin:0 0 8px; gap:6px; flex-direction:column;">
-      <input class="sheet-input" type="text" id="contact-name" placeholder="Nom du contact" style="margin-bottom:4px;">
-      <input class="sheet-input" type="email" id="contact-email" placeholder="email@exemple.com">
+      <input class="sheet-input" type="text" id="contact-name" placeholder="Nom du contact" style="margin-bottom:6px;">
+      <select id="contact-type" onchange="toggleContactType('edit')" class="sheet-input" style="margin-bottom:6px;">
+        <option value="repo">Dépôt GitHub</option>
+        <option value="email">Email</option>
+      </select>
+      <input class="sheet-input" type="text" id="contact-repo" placeholder="ex: taskmail-MA" style="margin-bottom:0;">
+      <input class="sheet-input" type="email" id="contact-email" placeholder="email@exemple.com" style="display:none;">
       <button onclick="saveNewContact()" style="background:#1C1C1E;color:white;border:none;border-radius:8px;padding:8px;font-size:0.82rem;font-weight:700;cursor:pointer;margin-top:2px;">Ajouter le contact</button>
     </div>
   </div>
@@ -1030,22 +1038,35 @@ function populateAssigneeSelects() {
   });
 }
 
+function toggleContactType(context) {
+  const prefix = context === 'add' ? 'add-' : '';
+  const type   = document.getElementById(prefix + 'contact-type')?.value;
+  const repo   = document.getElementById(prefix + 'contact-repo');
+  const email  = document.getElementById(prefix + 'contact-email');
+  if (!repo || !email) return;
+  if (type === 'repo') {
+    repo.style.display  = 'block';
+    email.style.display = 'none';
+    email.value = '';
+  } else {
+    repo.style.display  = 'none';
+    email.style.display = 'block';
+    repo.value = '';
+  }
+}
+
 function onAssigneeChange(sel) {
   if (!sel) return;
-  // Formulaire dans la feuille d'édition
   const editForm = document.getElementById('new-contact-form');
-  // Formulaire dans la barre d'ajout
   const addForm  = document.getElementById('add-bar-contact-form');
 
   if (sel.value === '__new__') {
     if (sel.id === 'new-assignee' && addForm) {
-      addForm.style.display = 'flex';
-      addForm.style.flexDirection = 'column';
+      addForm.style.display = 'block';
       addForm.dataset.triggeredBy = sel.id;
       if (editForm) editForm.style.display = 'none';
     } else if (editForm) {
-      editForm.style.display = 'flex';
-      editForm.style.flexDirection = 'column';
+      editForm.style.display = 'block';
       editForm.dataset.triggeredBy = sel.id;
       if (addForm) addForm.style.display = 'none';
     }
@@ -1061,11 +1082,14 @@ function saveNewContact() {
   const fromAdd  = addForm && addForm.style.display !== 'none';
   const nameId   = fromAdd ? 'add-contact-name'  : 'contact-name';
   const emailId  = fromAdd ? 'add-contact-email' : 'contact-email';
+  const repoId = fromAdd ? 'add-contact-repo' : 'contact-repo';
   const name  = (document.getElementById(nameId)?.value  || '').trim();
   const email = (document.getElementById(emailId)?.value || '').trim();
-  if (!name || !email) { toast('Nom et email requis', 'err'); return; }
-  if (contacts.find(c => c.email === email)) { toast('Contact déjà existant', 'info'); return; }
-  contacts.push({ name, email });
+  const repo  = (document.getElementById(repoId)?.value  || '').trim();
+  if (!name) { toast('Nom requis', 'err'); return; }
+  if (!email && !repo) { toast('Email ou dépôt GitHub requis', 'err'); return; }
+  if (contacts.find(ct => ct.email === email)) { toast('Contact déjà existant', 'info'); return; }
+  contacts.push({ name, email, repo });
   saveContacts();
   populateAssigneeSelects();
   // Sélectionne le nouveau contact dans le bon select

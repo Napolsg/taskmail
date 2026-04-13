@@ -17,14 +17,6 @@
       "created": "2026-04-13T15:53:47.743Z"
     },
     {
-      "id": 1776095392631.4033,
-      "title": "Faire les course",
-      "priority": "medium",
-      "project": "",
-      "done": false,
-      "created": "2026-04-13T15:49:52.631Z"
-    },
-    {
       "id": 1776090794929,
       "title": "Appeler Engie oh oui 🤗",
       "priority": "high",
@@ -34,16 +26,6 @@
       "done": false,
       "created": "2026-04-13T14:33:14.929Z",
       "assignedBy": "taskmail-MA"
-    },
-    {
-      "id": 1776094768126,
-      "title": "Cougihi",
-      "priority": "medium",
-      "project": "",
-      "assignee": "",
-      "assigneeRef": "",
-      "done": false,
-      "created": "2026-04-13T15:39:28.126Z"
     }
   ],
   "deletedIds": [
@@ -73,6 +55,8 @@
     "1776092637305.8157",
     "1776094490937",
     "1776094450869",
-    "1776094418366"
+    "1776094418366",
+    "1776094768126",
+    "1776095392631.4033"
   ]
 }

@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.9</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.0</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -595,6 +595,7 @@ async function init() {
   await triggerFetchTasks();
   await new Promise(r => setTimeout(r, 5000));
   await syncFromGitHub(true);
+  await pushAssignedTasks();
   if (ind) ind.style.display = 'none';
 
   // Pas de tâches par défaut

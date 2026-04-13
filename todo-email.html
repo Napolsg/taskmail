@@ -627,7 +627,7 @@ function tickClock() {
   const h = n.getHours().toString().padStart(2,'0');
   const m = n.getMinutes().toString().padStart(2,'0');
   const active = tasks.filter(t => !t.done).length;
-  document.getElementById('subtitle').textContent =
+  const _sub = document.getElementById('subtitle'); if(_sub) _sub.textContent =
     `${h}:${m}  ·  ${active} tâche${active !== 1 ? 's' : ''} en cours`;
 }
 
@@ -639,26 +639,7 @@ function checkSchedules() {
   updateNextSend();
 }
 
-function updateNextSend() {
-  if (!schedules.length) {
-    document.getElementById('ns-text').textContent = 'Aucun horaire configuré';
-    document.getElementById('ns-time').textContent = '';
-    return;
-  }
-  const n = new Date();
-  const nowMin = n.getHours() * 60 + n.getMinutes();
-  let best = null, bestDiff = Infinity;
-  schedules.forEach(s => {
-    const [h,m] = s.split(':').map(Number);
-    let d = h*60+m - nowMin;
-    if (d <= 0) d += 1440;
-    if (d < bestDiff) { bestDiff = d; best = s; }
-  });
-  const label = bestDiff < 60 ? `dans ${bestDiff} min`
-    : `dans ${Math.floor(bestDiff/60)}h${bestDiff%60 ? bestDiff%60+'m':''}`;
-  document.getElementById('ns-text').textContent = `Prochain envoi à ${best}`;
-  document.getElementById('ns-time').textContent = label;
-}
+function updateNextSend() { /* désactivé */ }
 
 function saveConfig() {
   config = {
@@ -878,7 +859,7 @@ function renderTasks() {
   const el   = document.getElementById('task-list');
   const list = getFiltered();
   const labels = { all:'Toutes les tâches', active:'À faire', done:'Tâches faites', high:'Tâches urgentes' };
-  document.getElementById('section-head').textContent = labels[filter] || 'Tâches';
+  const _sh = document.getElementById('section-head'); if(_sh) _sh.textContent = labels[filter] || 'Tâches';
 
   if (!list.length) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">✦</div><div class="empty-title">Aucune tâche</div><div class="empty-sub">Ajoutez-en une ci-dessous</div></div>`;
@@ -899,9 +880,9 @@ function renderTasks() {
 }
 
 function updateStats() {
-  document.getElementById('s-total').textContent = tasks.length;
-  document.getElementById('s-done').textContent  = tasks.filter(t =>  t.done).length;
-  document.getElementById('s-high').textContent  = tasks.filter(t => t.priority==='high' && !t.done).length;
+  const _st = document.getElementById('s-total'); if(_st) _st.textContent = tasks.length;
+  const _sd = document.getElementById('s-done'); if(_sd) _sd.textContent = tasks.filter(t => t.done).length;
+  const _sh2 = document.getElementById('s-high'); if(_sh2) _sh2.textContent = tasks.filter(t => t.priority==='high' && !t.done).length;
 }
 
 function render() { renderTasks(); updateStats(); renderChips(); renderLog(); updateNextSend(); }

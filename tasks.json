@@ -45,7 +45,9 @@
     "priority": "medium",
     "project": "",
     "done": false,
-    "created": "2026-04-13T10:17:29.758Z"
+    "created": "2026-04-13T10:17:29.758Z",
+    "assignee": "taskmail-MA",
+    "assigneeRef": "__contact_0__"
   },
   {
     "id": 1776074836440,

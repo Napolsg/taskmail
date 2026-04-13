@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TaskMail</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  background: #F2F2F7;
+  color: #1C1C1E;
+  font-family: 'Outfit', -apple-system, sans-serif;
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+}
+
+/* ── HEADER ── */
+.header {
+  padding: 20px 20px 12px;
+  background: linear-gradient(135deg, #007AFF 0%, #5B5EA6 100%);
+}
+.app-title { color: white !important; }
+.hbtn { background: rgba(255,255,255,0.25) !important; color: white !important; box-shadow: none !important; }
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+}
+.app-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1C1C1E;
+  letter-spacing: -0.5px;
+}
+.header-actions { display: flex; gap: 8px; }
+.hbtn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  transition: transform 0.1s;
+}
+.hbtn:active { transform: scale(0.92); }
+
+
+
+
+
+
+/* ── FILTERS ── */
+.filters {
+  display: flex;
+  gap: 7px;
+  padding: 16px 20px 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.filters::-webkit-scrollbar { display: none; }
+.fbtn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  background: white;
+  color: #3C3C43;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  transition: all 0.15s;
+}
+.fbtn.active { background: #007AFF; color: white; box-shadow: 0 2px 8px rgba(0,122,255,0.35); }
+.fbtn:active { transform: scale(0.95); }
+
+
+
+/* ── TASK LIST ── */
+.task-list {
+  padding: 0 20px 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.task-group {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  margin-bottom: 10px;
+}
+
+/* ── TASK ROW ── */
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #F2F2F7;
+  transition: background 0.1s;
+  animation: rowIn 0.2s ease;
+}
+@keyframes rowIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+.task-row:last-child { border-bottom: none; }
+.task-row:active { background: #F9F9F9; }
+.task-row.done { opacity: 0.45; }
+.task-row.done .task-title { text-decoration: line-through; color: #8E8E93; }
+
+.cb {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid #C7C7CC;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-size: 0.75rem;
+  color: white;
+  background: white;
+}
+.cb:active { transform: scale(0.85); }
+.cb.checked { background: #34C759; border-color: #34C759; }
+
+.priority-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pd-high   { background: #FF3B30; }
+.pd-medium { background: #FF9500; }
+.pd-low    { background: #34C759; }
+
+.task-body { flex: 1; min-width: 0; }
+.task-title {
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #1C1C1E;
+  line-height: 1.3;
+}
+.task-project {
+  font-size: 0.72rem;
+  color: #8E8E93;
+  margin-top: 2px;
+  font-weight: 400;
+}
+
+.edit-btn {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: #F2F2F7;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  color: #8E8E93;
+  font-size: 0.85rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.1s;
+}
+.edit-btn:active { background: #E5E5EA; color: #007AFF; }
+
+/* ── EMPTY ── */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #8E8E93;
+}
+.empty-icon { font-size: 3rem; margin-bottom: 12px; }
+.empty-title { font-size: 1rem; font-weight: 600; color: #3C3C43; margin-bottom: 4px; }
+.empty-sub { font-size: 0.82rem; }
+
+/* ── ADD BAR ── */
+.add-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 430px;
+  background: linear-gradient(180deg, rgba(235,242,255,0.97) 0%, rgba(214,229,255,0.99) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0,122,255,0.15);
+  padding: 12px 20px 32px;
+  z-index: 50;
+}
+.add-row { display: flex; gap: 8px; margin-bottom: 8px; }
+.add-input {
+  flex: 1;
+  background: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  color: #1C1C1E;
+  outline: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.add-input::placeholder { color: #C7C7CC; }
+.add-btn {
+  width: 44px; height: 44px;
+  background: #007AFF;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1.3rem;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.4);
+  flex-shrink: 0;
+  transition: all 0.1s;
+}
+.add-btn:active { transform: scale(0.93); opacity: 0.85; }
+.add-opts { display: flex; gap: 8px; }
+.add-sel {
+  flex: 1;
+  background: white;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  color: #3C3C43;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+
+/* ── BOTTOM SHEET ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 100;
+  display: none;
+  backdrop-filter: blur(4px);
+}
+.overlay.open { display: block; }
+
+.sheet {
+  position: fixed;
+  bottom: 0; left: 50%;
+  width: 100%; max-width: 430px;
+  background: #F2F2F7;
+  border-radius: 20px 20px 0 0;
+  padding-bottom: 34px;
+  z-index: 101;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateX(-50%) translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.sheet.open { transform: translateX(-50%) translateY(0); }
+
+.sheet-handle { width: 36px; height: 4px; background: #C7C7CC; border-radius: 2px; margin: 10px auto 0; }
+.sheet-header {
+  padding: 14px 20px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.sheet-title { font-size: 1.05rem; font-weight: 700; color: #1C1C1E; }
+.sheet-close {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #E5E5EA;
+  border: none;
+  color: #8E8E93;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', sans-serif;
+}
+.sheet-close:active { background: #D1D1D6; }
+
+/* Sheet groups */
+.sheet-group {
+  background: white;
+  border-radius: 14px;
+  margin: 0 16px 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.sheet-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #8E8E93;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 0 16px 6px;
+  margin-top: 4px;
+}
+.sheet-row {
+  padding: 12px 14px;
+  border-bottom: 1px solid #F2F2F7;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sheet-row:last-child { border-bottom: none; }
+.sheet-row label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8E8E93;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sheet-input {
+  background: transparent;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  color: #1C1C1E;
+  outline: none;
+  width: 100%;
+  padding: 0;
+}
+.sheet-input::placeholder { color: #C7C7CC; }
+
+.sheet-btn {
+  display: block;
+  width: calc(100% - 32px);
+  margin: 0 16px 10px;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.1s;
+  text-align: center;
+}
+.sheet-btn:active { opacity: 0.75; }
+.btn-blue { background: #007AFF; color: white; }
+.btn-green { background: #34C759; color: white; }
+.btn-red { background: #FF3B30; color: white; }
+.btn-gray { background: #E5E5EA; color: #3C3C43; }
+
+/* chips */
+.chip-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; }
+.chip {
+  display: flex; align-items: center; gap: 5px;
+  background: #EAF3FF; color: #007AFF;
+  border-radius: 20px; padding: 5px 10px;
+  font-size: 0.78rem; font-weight: 600;
+}
+.chip-x { background: none; border: none; color: #007AFF; cursor: pointer; font-size: 0.8rem; opacity: 0.6; padding: 0; }
+.chip-x:active { opacity: 1; }
+
+.time-row { display: flex; gap: 8px; padding: 10px 14px; }
+.time-inp {
+  flex: 1;
+  background: #F2F2F7; border: none; border-radius: 10px;
+  padding: 9px 12px; font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem; color: #1C1C1E; outline: none;
+}
+.time-add-btn {
+  background: #007AFF; color: white; border: none;
+  border-radius: 10px; padding: 9px 16px;
+  font-family: 'Outfit', sans-serif; font-size: 0.85rem;
+  font-weight: 700; cursor: pointer;
+}
+.time-add-btn:active { opacity: 0.8; }
+
+/* log */
+.log-wrap { padding: 8px 14px; display: flex; flex-direction: column; gap: 3px; max-height: 100px; overflow-y: auto; }
+.log-r { font-size: 0.7rem; color: #8E8E93; padding: 3px 0; }
+.log-r.sent { color: #34C759; }
+.log-r.sim  { color: #FF9500; }
+.log-r.err  { color: #FF3B30; }
+
+/* ── EDIT SHEET ── */
+.edit-sel {
+  background: transparent; border: none;
+  font-family: 'Outfit', sans-serif; font-size: 0.92rem;
+  color: #1C1C1E; outline: none; width: 100%; padding: 0;
+  appearance: none; -webkit-appearance: none;
+}
+
+/* ── TOAST ── */
+#toasts {
+  position: fixed; top: 60px;
+  left: 50%; transform: translateX(-50%);
+  width: calc(100% - 40px); max-width: 390px;
+  z-index: 999; display: flex; flex-direction: column; gap: 6px;
+  pointer-events: none;
+}
+.toast {
+  padding: 11px 16px; border-radius: 14px;
+  font-size: 0.83rem; font-weight: 600;
+  background: rgba(28,28,30,0.88);
+  color: white;
+  backdrop-filter: blur(10px);
+  animation: toastIn 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+@keyframes toastIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+.toast.ok  { background: rgba(52,199,89,0.92); }
+.toast.err { background: rgba(255,59,48,0.92); }
+.toast.info { background: rgba(0,122,255,0.92); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="app-title">TaskMail</div>
+    <div class="header-actions">
+      <button class="hbtn" onclick="openSettings()">⚙️</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- HIDDEN STATS FOR JS -->
+<div style="display:none">
+  <span id="s-total"></span><span id="s-done"></span><span id="s-high"></span>
+  <span id="subtitle"></span><span id="section-head"></span>
+  <span id="ns-text"></span><span id="ns-time"></span>
+</div>
+
+<!-- FILTERS -->
+<div class="filters">
+  <button class="fbtn active" onclick="setFilter('all',this)">Toutes</button>
+  <button class="fbtn" onclick="setFilter('active',this)">À faire</button>
+  <button class="fbtn" onclick="setFilter('done',this)">Faites ✓</button>
+  <button class="fbtn" onclick="setFilter('high',this)">🔴 Urgentes</button>
+</div>
+
+<!-- TASKS -->
+<div class="task-list" id="task-list"></div>
+
+<!-- ADD BAR -->
+<div class="add-bar">
+  <div class="add-row">
+    <input class="add-input" id="new-title" type="text" placeholder="Nouvelle tâche…" onkeydown="if(event.key==='Enter') addTask()">
+    <button class="add-btn" onclick="addTask()">＋</button>
+  </div>
+  <div class="add-opts">
+    <select class="add-sel" id="new-priority">
+      <option value="medium">🟡 Moyen</option>
+      <option value="high">🔴 Urgent</option>
+      <option value="low">🟢 Faible</option>
+    </select>
+    <input class="add-sel" type="text" id="new-project" placeholder="Projet…" style="font-size:0.82rem">
+  </div>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="overlay" id="s-overlay" onclick="closeSettings()"></div>
+<div class="sheet" id="s-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span class="sheet-title">Paramètres</span>
+    <button class="sheet-close" onclick="closeSettings()">✕</button>
+  </div>
+
+  <div class="sheet-group-label">Destinataire</div>
+  <div class="sheet-group">
+    <div class="sheet-row">
+      <label>Adresse email</label>
+      <input class="sheet-input" type="email" id="ejs-to" placeholder="toi@exemple.com">
+    </div>
+  </div>
+
+  <div class="sheet-group-label">EmailJS (optionnel)</div>
+  <div class="sheet-group">
+    <div class="sheet-row"><label>Service ID</label><input class="sheet-input" type="text" id="ejs-service" placeholder="service_xxxxxxx"></div>
+    <div class="sheet-row"><label>Template ID</label><input class="sheet-input" type="text" id="ejs-template" placeholder="template_xxxxxxx"></div>
+    <div class="sheet-row"><label>Public Key</label><input class="sheet-input" type="text" id="ejs-pubkey" placeholder="xxxxxxxxxxxx"></div>
+  </div>
+  <button class="sheet-btn btn-blue" onclick="saveConfig()">Sauvegarder</button>
+
+  <div class="sheet-group-label">Horaires d'envoi automatique</div>
+  <div class="sheet-group">
+    <div class="chip-wrap" id="chip-list"><span style="font-size:0.78rem;color:#C7C7CC;padding:2px">Aucun horaire</span></div>
+    <div class="time-row">
+      <input type="time" class="time-inp" id="new-time" value="08:00">
+      <button class="time-add-btn" onclick="addSchedule()">Ajouter</button>
+    </div>
+  </div>
+
+  <div class="sheet-group-label">Envoi</div>
+  <div class="sheet-group">
+    <div class="log-wrap" id="log-wrap"><div class="log-r">Aucun envoi</div></div>
+  </div>
+  <button class="sheet-btn btn-green" onclick="sendMailto()">📨 Envoyer via Gmail</button>
+  <button class="sheet-btn btn-gray" onclick="sendNow()">Tester EmailJS</button>
+</div>
+
+<!-- EDIT OVERLAY -->
+<div class="overlay" id="e-overlay" onclick="closeEdit()"></div>
+<div class="sheet" id="e-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span class="sheet-title">Modifier</span>
+    <button class="sheet-close" onclick="closeEdit()">✕</button>
+  </div>
+  <div class="sheet-group">
+    <div class="sheet-row"><label>Titre</label><input class="sheet-input" type="text" id="e-title" placeholder="Titre de la tâche"></div>
+    <div class="sheet-row">
+      <label>Priorité</label>
+      <select class="edit-sel" id="e-priority">
+        <option value="medium">🟡 Priorité moyenne</option>
+        <option value="high">🔴 Urgent</option>
+        <option value="low">🟢 Faible</option>
+      </select>
+    </div>
+    <div class="sheet-row"><label>Projet</label><input class="sheet-input" type="text" id="e-project" placeholder="Nom du projet"></div>
+  </div>
+  <button class="sheet-btn btn-blue" onclick="saveEdit()">Enregistrer</button>
+  <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+window.emailjs = { init:function(){}, send:function(){ return Promise.reject({text:'EmailJS non configuré'}); } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" onerror="console.warn('EmailJS CDN indisponible')"></script>
+<script>
+let tasks     = JSON.parse(localStorage.getItem('tm2_tasks')     || '[]');
+let schedules = JSON.parse(localStorage.getItem('tm2_schedules') || '["08:00","18:00"]');
+let config    = JSON.parse(localStorage.getItem('tm2_config')    || '{}');
+let log       = JSON.parse(localStorage.getItem('tm2_log')       || '[]');
+let filter    = 'all';
+let editingId = null;
+let lastMin   = null;
+
+function init() {
+  if (config.service)  document.getElementById('ejs-service').value  = config.service;
+  if (config.template) document.getElementById('ejs-template').value = config.template;
+  if (config.pubkey)   { document.getElementById('ejs-pubkey').value = config.pubkey; try { emailjs.init(config.pubkey); } catch(e){} }
+  if (config.to)       document.getElementById('ejs-to').value       = config.to;
+
+  if (!tasks.length) {
+    tasks = [
+      { id:1, title:'Revoir le rapport mensuel',   priority:'high',   project:'Finance',    done:false, created:new Date().toISOString() },
+      { id:2, title:'Appeler le client principal',  priority:'medium', project:'Commercial', done:false, created:new Date().toISOString() },
+      { id:3, title:'Préparer slides réunion',      priority:'low',    project:'',           done:true,  created:new Date().toISOString() },
+    ];
+    save();
+  }
+
+  render();
+  setInterval(tickClock, 1000);
+  setInterval(checkSchedules, 15000);
+  tickClock(); checkSchedules();
+}
+
+function tickClock() {
+  const n = new Date();
+  const h = n.getHours().toString().padStart(2,'0');
+  const m = n.getMinutes().toString().padStart(2,'0');
+  const active = tasks.filter(t => !t.done).length;
+  document.getElementById('subtitle').textContent =
+    `${h}:${m}  ·  ${active} tâche${active !== 1 ? 's' : ''} en cours`;
+}
+
+function checkSchedules() {
+  const n    = new Date();
+  const hhmm = n.getHours().toString().padStart(2,'0') + ':' + n.getMinutes().toString().padStart(2,'0');
+  const min  = n.getHours() * 60 + n.getMinutes();
+  if (schedules.includes(hhmm) && lastMin !== min) { lastMin = min; sendEmail('auto'); }
+  updateNextSend();
+}
+
+function updateNextSend() {
+  if (!schedules.length) {
+    document.getElementById('ns-text').textContent = 'Aucun horaire configuré';
+    document.getElementById('ns-time').textContent = '';
+    return;
+  }
+  const n = new Date();
+  const nowMin = n.getHours() * 60 + n.getMinutes();
+  let best = null, bestDiff = Infinity;
+  schedules.forEach(s => {
+    const [h,m] = s.split(':').map(Number);
+    let d = h*60+m - nowMin;
+    if (d <= 0) d += 1440;
+    if (d < bestDiff) { bestDiff = d; best = s; }
+  });
+  const label = bestDiff < 60 ? `dans ${bestDiff} min`
+    : `dans ${Math.floor(bestDiff/60)}h${bestDiff%60 ? bestDiff%60+'m':''}`;
+  document.getElementById('ns-text').textContent = `Prochain envoi à ${best}`;
+  document.getElementById('ns-time').textContent = label;
+}
+
+function saveConfig() {
+  config = {
+    service:  document.getElementById('ejs-service').value.trim(),
+    template: document.getElementById('ejs-template').value.trim(),
+    pubkey:   document.getElementById('ejs-pubkey').value.trim(),
+    to:       document.getElementById('ejs-to').value.trim(),
+  };
+  localStorage.setItem('tm2_config', JSON.stringify(config));
+  if (config.pubkey) try { emailjs.init(config.pubkey); } catch(e) {}
+  toast('Configuration sauvegardée', 'ok');
+}
+
+function sendMailto() {
+  const to = config.to || document.getElementById('ejs-to').value.trim();
+  if (!to) { toast('Renseigne une adresse email destinataire', 'err'); return; }
+  const pending = tasks.filter(t => !t.done);
+  if (!pending.length) { toast('Aucune tâche en attente', 'info'); return; }
+  const pLabel = { high:'URGENT', medium:'Moyen', low:'Faible' };
+  const lines  = pending.map((t,i) => `${i+1}. [${pLabel[t.priority]}] ${t.title}${t.project?' — '+t.project:''}`).join('\n');
+  const timeStr = new Date().toLocaleString('fr-FR');
+  const subject = encodeURIComponent(`TaskMail — ${pending.length} tâche(s) à faire`);
+  const body    = encodeURIComponent(`Bonjour,\n\nVos tâches du ${timeStr} :\n\n${lines}\n\n— TaskMail`);
+  const a = document.createElement('a');
+  a.href = `mailto:${to}?subject=${subject}&body=${body}`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => document.body.removeChild(a), 200);
+  addLog({ time: timeStr, status:'sent', count: pending.length });
+  toast(`Email préparé — ${pending.length} tâche(s)`, 'ok');
+}
+
+async function sendEmail(mode) {
+  const pending = tasks.filter(t => !t.done);
+  if (!pending.length) { if (mode !== 'auto') toast('Aucune tâche en attente', 'info'); return; }
+  const pLabel = { high:'URGENT', medium:'Moyen', low:'Faible' };
+  const lines  = pending.map((t,i) => `${i+1}. [${pLabel[t.priority]}] ${t.title}${t.project?' — '+t.project:''}`).join('\n');
+  const timeStr = new Date().toLocaleString('fr-FR');
+  if (!config.service || !config.template || !config.pubkey || !config.to) {
+    addLog({ time:timeStr, status:'sim', count:pending.length });
+    if (mode !== 'auto') toast('Mode simulation — configurez EmailJS', 'info');
+    return;
+  }
+  try {
+    await emailjs.send(config.service, config.template, {
+      to_email:config.to, send_time:timeStr,
+      task_count:pending.length, task_list:lines,
+      subject:`TaskMail — ${pending.length} tâche(s) à faire`,
+    });
+    addLog({ time:timeStr, status:'sent', count:pending.length });
+    toast(`Email envoyé (${pending.length} tâches)`, 'ok');
+  } catch(e) {
+    addLog({ time:timeStr, status:'error', msg:e.text||e.message });
+    toast('Erreur : '+(e.text||e.message), 'err');
+  }
+}
+
+function sendNow() { sendEmail('manual'); }
+
+function addLog(e) {
+  log.unshift(e); if (log.length > 20) log.pop();
+  localStorage.setItem('tm2_log', JSON.stringify(log));
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('log-wrap');
+  if (!log.length) { el.innerHTML = '<div class="log-r">Aucun envoi</div>'; return; }
+  el.innerHTML = log.map(e =>
+    e.status==='sent'  ? `<div class="log-r sent">✓ ${e.time} · ${e.count} tâches</div>` :
+    e.status==='sim'   ? `<div class="log-r sim">○ ${e.time} · simulation</div>` :
+                         `<div class="log-r err">✕ ${e.time} · ${e.msg}</div>`
+  ).join('');
+}
+
+function addSchedule() {
+  const v = document.getElementById('new-time').value;
+  if (!v || schedules.includes(v)) { if(schedules.includes(v)) toast('Déjà ajouté','info'); return; }
+  schedules.push(v); schedules.sort();
+  localStorage.setItem('tm2_schedules', JSON.stringify(schedules));
+  renderChips(); updateNextSend();
+  toast(`Horaire ${v} ajouté`, 'ok');
+}
+
+function removeSchedule(v) {
+  schedules = schedules.filter(s => s !== v);
+  localStorage.setItem('tm2_schedules', JSON.stringify(schedules));
+  renderChips(); updateNextSend();
+}
+
+function renderChips() {
+  const el = document.getElementById('chip-list');
+  if (!schedules.length) { el.innerHTML = '<span style="font-size:0.78rem;color:#C7C7CC;padding:2px">Aucun horaire</span>'; return; }
+  el.innerHTML = schedules.map(s =>
+    `<div class="chip">${s}<button class="chip-x" onclick="removeSchedule('${s}')">✕</button></div>`
+  ).join('');
+}
+
+function addTask() {
+  const title = document.getElementById('new-title').value.trim();
+  if (!title) return;
+  tasks.unshift({ id:Date.now(), title, priority:document.getElementById('new-priority').value, project:document.getElementById('new-project').value.trim(), done:false, created:new Date().toISOString() });
+  document.getElementById('new-title').value = '';
+  document.getElementById('new-project').value = '';
+  save(); renderTasks(); updateStats(); tickClock();
+}
+
+function toggleTask(id) {
+  const t = tasks.find(t => t.id===id);
+  if (t) { t.done=!t.done; save(); renderTasks(); updateStats(); tickClock(); }
+}
+
+function openEdit(id) {
+  const t = tasks.find(t => t.id===id);
+  if (!t) return;
+  editingId = id;
+  document.getElementById('e-title').value    = t.title;
+  document.getElementById('e-priority').value = t.priority;
+  document.getElementById('e-project').value  = t.project || '';
+  document.getElementById('e-overlay').classList.add('open');
+  document.getElementById('e-sheet').classList.add('open');
+}
+
+function closeEdit() {
+  document.getElementById('e-overlay').classList.remove('open');
+  document.getElementById('e-sheet').classList.remove('open');
+  editingId = null;
+}
+
+function saveEdit() {
+  const t = tasks.find(t => t.id===editingId);
+  if (!t) return;
+  t.title    = document.getElementById('e-title').value.trim() || t.title;
+  t.priority = document.getElementById('e-priority').value;
+  t.project  = document.getElementById('e-project').value.trim();
+  save(); renderTasks(); updateStats(); closeEdit();
+  toast('Tâche mise à jour', 'ok');
+}
+
+function deleteEdit() {
+  tasks = tasks.filter(t => t.id!==editingId);
+  save(); renderTasks(); updateStats(); tickClock(); closeEdit();
+  toast('Tâche supprimée', 'info');
+}
+
+function save() { localStorage.setItem('tm2_tasks', JSON.stringify(tasks)); }
+
+function setFilter(f, el) {
+  filter = f;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderTasks();
+}
+
+const priorityOrder = { high: 0, medium: 1, low: 2 };
+function sortByPriority(list) {
+  return [...list].sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return priorityOrder[a.priority] - priorityOrder[b.priority];
+  });
+}
+function getFiltered() {
+  let list;
+  if (filter==='active') list = tasks.filter(t => !t.done);
+  else if (filter==='done')   list = tasks.filter(t =>  t.done);
+  else if (filter==='high')   list = tasks.filter(t => t.priority==='high' && !t.done);
+  else list = [...tasks];
+  return sortByPriority(list);
+}
+
+function renderTasks() {
+  const el   = document.getElementById('task-list');
+  const list = getFiltered();
+  const labels = { all:'Toutes les tâches', active:'À faire', done:'Tâches faites', high:'Tâches urgentes' };
+  document.getElementById('section-head').textContent = labels[filter] || 'Tâches';
+
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">✦</div><div class="empty-title">Aucune tâche</div><div class="empty-sub">Ajoutez-en une ci-dessous</div></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="task-group">${list.map(t => `
+    <div class="task-row ${t.done?'done':''}">
+      <div class="cb ${t.done?'checked':''}" onclick="toggleTask(${t.id})">${t.done?'✓':''}</div>
+      <div class="priority-dot pd-${t.priority}"></div>
+      <div class="task-body" onclick="openEdit(${t.id})">
+        <div class="task-title">${esc(t.title)}</div>
+        ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ''}
+      </div>
+      <button class="edit-btn" onclick="openEdit(${t.id})">✎</button>
+    </div>
+  `).join('')}</div>`;
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = tasks.length;
+  document.getElementById('s-done').textContent  = tasks.filter(t =>  t.done).length;
+  document.getElementById('s-high').textContent  = tasks.filter(t => t.priority==='high' && !t.done).length;
+}
+
+function render() { renderTasks(); updateStats(); renderChips(); renderLog(); updateNextSend(); }
+
+function openSettings() {
+  document.getElementById('s-overlay').classList.add('open');
+  document.getElementById('s-sheet').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('s-overlay').classList.remove('open');
+  document.getElementById('s-sheet').classList.remove('open');
+}
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else { init(); }
+</script>
+</body>
+</html>

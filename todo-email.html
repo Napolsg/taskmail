@@ -561,7 +561,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v4.7</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v4.8</div>
 
 <div id="toasts"></div>
 
@@ -646,42 +646,39 @@ async function syncFromGitHub(notify = false) {
   try {
     const url = 'https://api.github.com/repos/napolsg/taskmail/contents/tasks.json';
     const res = await fetch(url, {
-      headers: {
-        'Authorization': 'token ' + sanitize(config.ghToken),
-        'Accept': 'application/vnd.github.v3+json'
-      }
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-cache'
     });
     if (!res.ok) return;
     const data = await res.json();
     const binary = atob(data.content.replace(/\s/g, ''));
-    const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+    const bytes  = Uint8Array.from(binary, ch => ch.charCodeAt(0));
     const parsed = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 
-    // Support ancien format (array) et nouveau format (objet avec tasks + deletedIds)
-    const remote = Array.isArray(parsed) ? parsed : (parsed.tasks || []);
+    const remote        = Array.isArray(parsed) ? parsed : (parsed.tasks || []);
     const remoteDeleted = Array.isArray(parsed) ? [] : (parsed.deletedIds || []);
 
-    // Fusionne les suppressions distantes avec les locales
+    // Fusionne les suppressions
     remoteDeleted.forEach(id => deleted.add(String(id)));
     localStorage.setItem('tm2_deleted', JSON.stringify([...deleted]));
 
-    const localIds  = new Set(tasks.map(t => String(t.id)));
+    // GitHub est la source de vérité
+    // On garde les tâches locales non encore sur GitHub (créées hors ligne)
     const remoteIds = new Set(remote.map(t => String(t.id)));
+    const localOnly = tasks.filter(t => !remoteIds.has(String(t.id)) && !deleted.has(String(t.id)));
 
-    // Ignore les tâches supprimées (localement ou à distance)
-    const newFromRemote = remote.filter(t => !localIds.has(String(t.id)) && !deleted.has(String(t.id)));
-    const onlyLocal     = tasks.filter(t => !remoteIds.has(String(t.id)));
+    // Tâches remote filtrées des supprimées
+    const validRemote = remote.filter(t => !deleted.has(String(t.id)));
 
-    if (newFromRemote.length > 0 || onlyLocal.length > 0) {
-      const merged = [...newFromRemote, ...tasks];
-      const seen = new Set();
-      tasks = merged.filter(t => { const k = String(t.id); if (seen.has(k)) return false; seen.add(k); return true; });
-      localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
+    // Résultat : remote (source de vérité) + tâches locales non encore uploadées
+    const merged = [...validRemote, ...localOnly];
+    const prev   = JSON.stringify(tasks);
+    tasks = merged;
+    localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
+
+    if (JSON.stringify(tasks) !== prev) {
       render();
-      if (notify && newFromRemote.length > 0) {
-        toast(newFromRemote.length + ' nouvelle(s) tâche(s) reçue(s)', 'ok');
-      }
-
+      if (notify) toast('Tâches synchronisées', 'ok');
     }
   } catch(e) {
     console.warn('Sync depuis GitHub échoué:', e.message);

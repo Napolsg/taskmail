@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.8</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v3.9</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -952,18 +952,26 @@ async function syncToGitHub() {
   if (!config.ghToken) return;
   const url = 'https://api.github.com/repos/' + owner + '/' + repo + '/contents/tasks.json';
   try {
+    // Re-lit le SHA juste avant d'écrire pour éviter les conflits 409
     const getRes = await fetch(url, {
-      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' }
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-cache'
     });
+    if (!getRes.ok) return;
     const getData = await getRes.json();
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(tasks, null, 2))));
-    await fetch(url, {
+    const putRes = await fetch(url, {
       method: 'PUT',
       headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: 'TaskMail: mise a jour des taches', content, sha: getData.sha })
     });
+    if (putRes.status === 409) {
+      // Réessaie une fois en cas de conflit
+      console.warn('Conflit 409 - réessai...');
+      setTimeout(syncToGitHub, 2000);
+      return;
+    }
     console.log('Taches synchronisees sur GitHub');
-    // Pousse aussi les tâches assignées vers les autres dépôts
     await pushAssignedTasks();
   } catch(e) {
     console.warn('Sync GitHub échoué:', e.message);

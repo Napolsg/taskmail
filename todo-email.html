@@ -517,12 +517,15 @@ let filter    = 'all';
 let editingId = null;
 let lastMin   = null;
 
-function init() {
+async function init() {
   if (config.service)  document.getElementById('ejs-service').value  = config.service;
   if (config.template) document.getElementById('ejs-template').value = config.template;
   if (config.pubkey)   { document.getElementById('ejs-pubkey').value = config.pubkey; try { emailjs.init(config.pubkey); } catch(e){} }
   if (config.to)       document.getElementById('ejs-to').value       = config.to;
-  if (config.ghToken)  document.getElementById('gh-token').value  = config.ghToken;
+  if (config.ghToken)  document.getElementById('gh-token').value     = config.ghToken;
+
+  // Sync depuis GitHub au chargement
+  await syncFromGitHub();
 
   if (!tasks.length) {
     tasks = [
@@ -536,7 +539,33 @@ function init() {
   render();
   setInterval(tickClock, 1000);
   setInterval(checkSchedules, 15000);
+  // Sync depuis GitHub toutes les 2 minutes
+  setInterval(syncFromGitHub, 120000);
   tickClock(); checkSchedules();
+}
+
+async function syncFromGitHub() {
+  if (!config.ghToken) return;
+  try {
+    const url = 'https://api.github.com/repos/napolsg/taskmail/contents/tasks.json';
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `token ${config.ghToken}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const remote = JSON.parse(atob(data.content));
+    if (JSON.stringify(remote) !== JSON.stringify(tasks)) {
+      tasks = remote;
+      localStorage.setItem('tm2_tasks', JSON.stringify(tasks));
+      render();
+      console.log('Tâches synchronisées depuis GitHub');
+    }
+  } catch(e) {
+    console.warn('Sync depuis GitHub échoué:', e.message);
+  }
 }
 
 function tickClock() {

@@ -8,11 +8,15 @@ const repo  = 'taskmail';
 
 async function getTasks() {
   const { data } = await octokit.repos.getContent({ owner, repo, path: 'tasks.json' });
-  return { tasks: JSON.parse(Buffer.from(data.content, 'base64').toString()), sha: data.sha };
+  const parsed = JSON.parse(Buffer.from(data.content, 'base64').toString());
+  const tasks = Array.isArray(parsed) ? parsed : (parsed.tasks || []);
+  const deletedIds = Array.isArray(parsed) ? [] : (parsed.deletedIds || []);
+  return { tasks, sha: data.sha, deletedIds };
 }
 
-async function saveTasks(tasks, sha) {
-  const content = Buffer.from(JSON.stringify(tasks, null, 2)).toString('base64');
+async function saveTasks(tasks, sha, deletedIds = []) {
+  const payload = { tasks, deletedIds };
+  const content = Buffer.from(JSON.stringify(payload, null, 2)).toString('base64');
   await octokit.repos.createOrUpdateFileContents({
     owner, repo, path: 'tasks.json',
     message: 'TaskMail: nouvelles tâches par email',

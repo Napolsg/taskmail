@@ -433,6 +433,9 @@ html, body {
 </div>
 
 <!-- TASKS -->
+<div id="sync-indicator" style="display:none; text-align:center; padding:8px; font-size:0.78rem; color:#8E8E93;">
+  ⏳ Vérification des emails…
+</div>
 <div class="task-list" id="task-list"></div>
 
 <!-- ADD BAR -->
@@ -524,12 +527,16 @@ async function init() {
   if (config.to)       document.getElementById('ejs-to').value       = config.to;
   if (config.ghToken)  document.getElementById('gh-token').value     = config.ghToken;
 
-  // Déclenche fetch-tasks pour récupérer les nouveaux emails
+  // Affiche la liste immédiatement
+  render();
+
+  // Déclenche fetch-tasks en arrière-plan
+  const ind = document.getElementById('sync-indicator');
+  if (ind) ind.style.display = 'block';
   await triggerFetchTasks();
-  // Attend 5 secondes que le workflow démarre, puis sync
   await new Promise(r => setTimeout(r, 5000));
-  // Sync depuis GitHub avant le premier affichage
   await syncFromGitHub(true);
+  if (ind) ind.style.display = 'none';
 
   if (!tasks.length) {
     tasks = [
@@ -540,7 +547,6 @@ async function init() {
     save();
   }
 
-  render();
   setInterval(tickClock, 1000);
   setInterval(checkSchedules, 15000);
   // Sync depuis GitHub toutes les 2 minutes (silencieuse)
@@ -721,6 +727,7 @@ function addLog(e) {
 
 function renderLog() {
   const el = document.getElementById('log-wrap');
+  if (!el) return;
   if (!log.length) { el.innerHTML = '<div class="log-r">Aucun envoi</div>'; return; }
   el.innerHTML = log.map(e =>
     e.status==='sent'  ? `<div class="log-r sent">✓ ${e.time} · ${e.count} tâches</div>` :

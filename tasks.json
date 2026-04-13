@@ -5,7 +5,9 @@
     "priority": "medium",
     "project": "",
     "done": false,
-    "created": "2026-04-13T10:43:35.266Z"
+    "created": "2026-04-13T10:43:35.266Z",
+    "assignee": "taskmail-MA",
+    "assigneeRef": "__contact_0__"
   },
   {
     "id": 1776077015266.811,
@@ -13,7 +15,9 @@
     "priority": "medium",
     "project": "",
     "done": false,
-    "created": "2026-04-13T10:43:35.266Z"
+    "created": "2026-04-13T10:43:35.266Z",
+    "assignee": "taskmail-MA",
+    "assigneeRef": "__contact_0__"
   },
   {
     "id": 1776077015266.3025,
@@ -21,15 +25,9 @@
     "priority": "medium",
     "project": "",
     "done": false,
-    "created": "2026-04-13T10:43:35.266Z"
-  },
-  {
-    "id": 1776075449758.869,
-    "title": "Changer ça",
-    "priority": "medium",
-    "project": "",
-    "done": true,
-    "created": "2026-04-13T10:17:29.758Z"
+    "created": "2026-04-13T10:43:35.266Z",
+    "assignee": "taskmail-MA",
+    "assigneeRef": "__contact_0__"
   },
   {
     "id": 1776075449758.3728,
@@ -38,14 +36,6 @@
     "project": "",
     "done": false,
     "created": "2026-04-13T10:17:29.758Z"
-  },
-  {
-    "id": 1776074940889,
-    "title": "Réunion nouvelle",
-    "priority": "medium",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T10:09:00.889Z"
   },
   {
     "id": 1776074836440,
@@ -77,46 +67,7 @@
     "priority": "medium",
     "project": "",
     "done": false,
-    "created": "2026-04-13T10:00:18.083Z"
-  },
-  {
-    "id": 1776074258753,
-    "title": "Test 2",
-    "priority": "medium",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T09:57:38.753Z"
-  },
-  {
-    "id": 1776074175703,
-    "title": "Test",
-    "priority": "medium",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T09:56:15.703Z"
-  },
-  {
-    "id": 1776073279291.6628,
-    "title": "Appeler le fournisseur",
-    "priority": "medium",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T09:41:19.291Z"
-  },
-  {
-    "id": 1776073279291.3237,
-    "title": "RÃÂÃÂ©union urgente vendredi",
-    "priority": "high",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T09:41:19.291Z"
-  },
-  {
-    "id": 1776073279291.808,
-    "title": "Archiver les anciens fichiers",
-    "priority": "low",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T09:41:19.291Z"
+    "created": "2026-04-13T10:00:18.083Z",
+    "assignee": ""
   }
 ]

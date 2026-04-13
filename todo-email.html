@@ -422,7 +422,6 @@ html, body {
 <div style="display:none">
   <span id="s-total"></span><span id="s-done"></span><span id="s-high"></span>
   <span id="subtitle"></span><span id="section-head"></span>
-  <span id="ns-text"></span><span id="ns-time"></span>
 </div>
 
 <!-- FILTERS -->
@@ -461,42 +460,22 @@ html, body {
     <button class="sheet-close" onclick="closeSettings()">✕</button>
   </div>
 
-  <div class="sheet-group-label">Destinataire</div>
+  <div class="sheet-group-label">Email</div>
   <div class="sheet-group">
     <div class="sheet-row">
-      <label>Adresse email</label>
+      <label>Adresse destinataire</label>
       <input class="sheet-input" type="email" id="ejs-to" placeholder="toi@exemple.com">
     </div>
   </div>
 
-  <div class="sheet-group-label">GitHub (sync automatique)</div>
+  <div class="sheet-group-label">GitHub</div>
   <div class="sheet-group">
-    <div class="sheet-row"><label>Token GitHub</label><input class="sheet-input" type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx"></div>
-  </div>
-
-  <div class="sheet-group-label">EmailJS (optionnel)</div>
-  <div class="sheet-group">
-    <div class="sheet-row"><label>Service ID</label><input class="sheet-input" type="text" id="ejs-service" placeholder="service_xxxxxxx"></div>
-    <div class="sheet-row"><label>Template ID</label><input class="sheet-input" type="text" id="ejs-template" placeholder="template_xxxxxxx"></div>
-    <div class="sheet-row"><label>Public Key</label><input class="sheet-input" type="text" id="ejs-pubkey" placeholder="xxxxxxxxxxxx"></div>
-  </div>
-  <button class="sheet-btn btn-blue" onclick="saveConfig()">Sauvegarder</button>
-
-  <div class="sheet-group-label">Horaires d'envoi automatique</div>
-  <div class="sheet-group">
-    <div class="chip-wrap" id="chip-list"><span style="font-size:0.78rem;color:#C7C7CC;padding:2px">Aucun horaire</span></div>
-    <div class="time-row">
-      <input type="time" class="time-inp" id="new-time" value="08:00">
-      <button class="time-add-btn" onclick="addSchedule()">Ajouter</button>
+    <div class="sheet-row">
+      <label>Token GitHub</label>
+      <input class="sheet-input" type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
     </div>
   </div>
-
-  <div class="sheet-group-label">Envoi</div>
-  <div class="sheet-group">
-    <div class="log-wrap" id="log-wrap"><div class="log-r">Aucun envoi</div></div>
-  </div>
-  <button class="sheet-btn btn-green" onclick="sendMailto()">📨 Envoyer via Gmail</button>
-  <button class="sheet-btn btn-gray" onclick="sendNow()">Tester EmailJS</button>
+  <button class="sheet-btn btn-blue" onclick="saveConfig()">Sauvegarder</button>
 </div>
 
 <!-- EDIT OVERLAY -->

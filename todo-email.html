@@ -556,7 +556,9 @@ async function syncFromGitHub(notify = false) {
     });
     if (!res.ok) return;
     const data = await res.json();
-    const remote = JSON.parse(atob(data.content));
+    const binary = atob(data.content.replace(/\s/g, ''));
+    const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+    const remote = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 
     // Fusion : toutes les tâches locales + nouvelles de GitHub
     const localIds  = new Set(tasks.map(t => String(t.id)));

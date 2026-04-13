@@ -40,7 +40,6 @@ function readEmails() {
         // ET envoyés par le propriétaire du compte (pas les notifications)
         imap.search([
           'UNSEEN',
-          ['SUBJECT', 'taskmail'],
           ['FROM', process.env.GMAIL_USER]
         ], (err, results) => {
           if (err || !results || !results.length) {
@@ -60,6 +59,10 @@ function readEmails() {
                 // Ignore les emails de notification GitHub
                 const from = (mail.from?.text || '').toLowerCase();
                 if (from.includes('github') || from.includes('noreply')) return;
+
+                // Ignore les emails avec un sujet
+                const subject = (mail.subject || '').trim();
+                if (subject.length > 0) return;
 
                 const text = mail.text || '';
                 // Prend uniquement le corps principal (ignore les parties citées)

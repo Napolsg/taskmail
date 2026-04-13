@@ -1,55 +1,5 @@
 [
   {
-    "id": 1776083009666,
-    "title": "zdzd",
-    "priority": "medium",
-    "project": "",
-    "assignee": "taskmail",
-    "done": true,
-    "created": "2026-04-13T12:23:29.666Z",
-    "assigneeRef": "__contact_0__"
-  },
-  {
-    "id": 1776077015266.6455,
-    "title": "sisisisis",
-    "priority": "medium",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T10:43:35.266Z",
-    "assignee": "taskmail-MA",
-    "assigneeRef": "__contact_0__"
-  },
-  {
-    "id": 1776077015266.811,
-    "title": "sasasasasa",
-    "priority": "medium",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T10:43:35.266Z",
-    "assignee": "taskmail-MA",
-    "assigneeRef": "__contact_0__"
-  },
-  {
-    "id": 1776077015266.3025,
-    "title": "lalalala",
-    "priority": "medium",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T10:43:35.266Z",
-    "assignee": "taskmail-MA",
-    "assigneeRef": "__contact_0__"
-  },
-  {
-    "id": 1776075449758.3728,
-    "title": "Changer ci",
-    "priority": "medium",
-    "project": "",
-    "done": false,
-    "created": "2026-04-13T10:17:29.758Z",
-    "assignee": "taskmail-MA",
-    "assigneeRef": "__contact_0__"
-  },
-  {
     "id": 1776074836440,
     "title": "Test",
     "priority": "medium",
@@ -71,7 +21,9 @@
     "priority": "medium",
     "project": "",
     "done": false,
-    "created": "2026-04-13T10:00:18.083Z"
+    "created": "2026-04-13T10:00:18.083Z",
+    "assignee": "taskmail-MA",
+    "assigneeRef": "__contact_0__"
   },
   {
     "id": 1776074418083.4592,

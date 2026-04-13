@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.2</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.3</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -595,7 +595,8 @@ async function init() {
   await triggerFetchTasks();
   await new Promise(r => setTimeout(r, 5000));
   await syncFromGitHub(true);
-  scheduleSyncToGitHub();
+  // Pousse les tâches assignées sans écraser tasks.json local
+  await pushAssignedTasks();
   if (ind) ind.style.display = 'none';
 
   // Pas de tâches par défaut
@@ -603,7 +604,10 @@ async function init() {
   setInterval(tickClock, 1000);
   setInterval(checkSchedules, 15000);
   // Sync depuis GitHub toutes les 2 minutes (silencieuse)
-  setInterval(() => syncFromGitHub(false), 120000);
+  setInterval(async () => {
+    await syncFromGitHub(false);
+    await pushAssignedTasks();
+  }, 120000);
   tickClock(); checkSchedules();
 }
 

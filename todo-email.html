@@ -412,7 +412,7 @@ html, body {
   <div class="header-top">
     <div style="display:flex; align-items:baseline; gap:8px;">
       <div class="app-title">TaskMail</div>
-      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.3</span>
+      <span style="font-size:0.7rem; color:#8E8E93; font-family:monospace;">v4.4</span>
     </div>
     <div class="header-actions">
       <button class="hbtn" onclick="openSettings()">⚙️</button>
@@ -438,6 +438,9 @@ html, body {
 <!-- TASKS -->
 <div id="sync-indicator" style="display:none; text-align:center; padding:8px; font-size:0.78rem; color:#8E8E93;">
   ⏳ Vérification des emails…
+</div>
+<div id="done-bar" style="display:none; padding:4px 20px 8px; text-align:right;">
+  <button onclick="clearDone()" style="background:none; border:none; font-size:0.78rem; color:#FF3B30; cursor:pointer; font-family:'Outfit',sans-serif; font-weight:600;">🗑 Supprimer les tâches faites</button>
 </div>
 <div class="task-list" id="task-list"></div>
 
@@ -1013,6 +1016,9 @@ function renderTasks() {
   const labels = { all:'Toutes les tâches', active:'À faire', done:'Tâches faites', high:'Tâches urgentes' };
   const _sh = document.getElementById('section-head'); if(_sh) _sh.textContent = labels[filter] || 'Tâches';
 
+  const doneBar = document.getElementById('done-bar');
+  if (doneBar) doneBar.style.display = tasks.some(t => t.done) ? 'block' : 'none';
+
   if (!list.length) {
     el.innerHTML = `<div class="empty"><div class="empty-icon">✦</div><div class="empty-title">Aucune tâche</div><div class="empty-sub">Ajoutez-en une ci-dessous</div></div>`;
     return;
@@ -1308,6 +1314,15 @@ function getContactByValue(val) {
   if (!val || !val.startsWith('__contact_')) return null;
   const idx = parseInt(val.replace('__contact_', '').replace('__', ''));
   return contacts[idx] || null;
+}
+
+function clearDone() {
+  const doneIds = tasks.filter(t => t.done).map(t => String(t.id));
+  doneIds.forEach(id => deleted.add(id));
+  localStorage.setItem('tm2_deleted', JSON.stringify([...deleted]));
+  tasks = tasks.filter(t => !t.done);
+  save(); renderTasks(); updateStats(); tickClock();
+  toast('Tâches faites supprimées', 'ok');
 }
 
 function render() { renderTasks(); updateStats(); renderChips(); renderLog(); updateNextSend(); populateAssigneeSelects(); }

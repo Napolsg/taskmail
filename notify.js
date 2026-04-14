@@ -82,8 +82,13 @@ function sendMail(to, subject, html) {
   if (eventName === 'push') {
     // Tâches assignées récemment (dernières 2 min)
     const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000);
+    // Tâches créées localement ET assignées à quelqu'un d'autre (pas les tâches reçues)
     const newAssigned = allTasks.filter(t =>
-      t.assignedBy && !t.done && t.created && new Date(t.created) > twoMinAgo
+      !t.assignedBy &&           // pas une tâche reçue
+      t.assigneeRef &&           // assignée à quelqu'un
+      !t.done &&
+      t.created &&
+      new Date(t.created) > twoMinAgo
     );
 
     if (!newAssigned.length) {

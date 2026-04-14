@@ -15,7 +15,7 @@ tasks.forEach(t => {
   if (!t.assigneeRef || !t.assigneeRef.startsWith('__contact_')) return;
   if (t.done) return;
   if (!t.assignee || t.assignee === '') return;
-  // assignee contient le nom du dépôt cible
+  if (t.assignedBy) return; // tâche reçue d'un autre dépôt, on ne la repousse pas
   const targetRepo = t.assignee;
   if (!targetRepo || targetRepo === repo) return;
   if (!byRepo[targetRepo]) byRepo[targetRepo] = [];

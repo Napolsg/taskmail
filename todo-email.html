@@ -578,7 +578,9 @@ let tasks     = JSON.parse(localStorage.getItem('tm2_tasks')     || '[]');
 let schedules = JSON.parse(localStorage.getItem('tm2_schedules') || '["08:00","18:00"]');
 let log       = JSON.parse(localStorage.getItem('tm2_log')       || '[]');
 let deleted   = new Set(JSON.parse(localStorage.getItem('tm2_deleted') || '[]'));
-let contacts  = JSON.parse(localStorage.getItem('tm2_contacts')  || '[]');
+let contacts  = JSON.parse(localStorage.getItem('tm2_contacts')  || JSON.stringify([
+  { name: 'Bitchoun', repo: 'taskmail-MA', email: 'mariealix.delassus@gmail.com' }
+]));
 let filter    = 'all';
 let editingId = null;
 let lastMin   = null;
@@ -839,11 +841,21 @@ function addTask() {
   document.getElementById('new-project').value = '';
   document.getElementById('new-assignee').value = '';
   save(); renderTasks(); updateStats(); tickClock();
+  const newTask = tasks[0];
+  if (newTask && newTask.assigneeRef && newTask.assigneeRef.startsWith('__contact_')) {
+    triggerNotification(newTask, 'assigned');
+  }
 }
 
 function toggleTask(id) {
   const t = tasks.find(t => t.id===id);
-  if (t) { t.done=!t.done; save(); renderTasks(); updateStats(); tickClock(); }
+  if (t) {
+    t.done = !t.done;
+    save(); renderTasks(); updateStats(); tickClock();
+    if (t.done && t.assignedBy) {
+      triggerCompletionNotification(t);
+    }
+  }
 }
 
 function openEdit(id) {
@@ -878,8 +890,13 @@ function saveEdit() {
   t.project  = document.getElementById('e-project').value.trim();
   t.assignee    = getAssigneeEmail(document.getElementById('e-assignee')?.value || '');
   t.assigneeRef = document.getElementById('e-assignee')?.value || '';
+  const prevAssignee = (tasks.find(t => t.id === editingId) || {}).assigneeRef || '';
   save(); renderTasks(); updateStats(); closeEdit();
   toast('Tâche mise à jour', 'ok');
+  const updatedTask = tasks.find(t => t.id === editingId);
+  if (updatedTask && updatedTask.assigneeRef && updatedTask.assigneeRef !== prevAssignee) {
+    triggerNotification(updatedTask, 'assigned');
+  }
 }
 
 function deleteEdit() {
@@ -1329,6 +1346,106 @@ function clearDone() {
   tasks = tasks.filter(t => !t.done);
   save(); renderTasks(); updateStats(); tickClock();
   toast('Tâches faites supprimées', 'ok');
+}
+
+async function triggerNotification(task, type) {
+  if (!config.ghToken) return;
+  const ct = task.assigneeRef ? getContactByValue(task.assigneeRef) : null;
+
+  // Notification via email si contact avec email
+  if (ct && ct.email) {
+    try {
+      await fetch('https://api.github.com/repos/napolsg/' + repo + '/actions/workflows/notify.yml/dispatches', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'token ' + sanitize(config.ghToken),
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ref: 'main',
+          inputs: { task_id: String(task.id), to_email: ct.email, notif_type: type }
+        })
+      });
+      console.log('Notif email envoyée à ' + ct.email);
+    } catch(e) { console.warn('Notif email échouée:', e.message); }
+  }
+
+  // Notification via dépôt GitHub si contact avec repo
+  if (ct && ct.repo) {
+    const notif = {
+      type,
+      taskTitle: task.title,
+      from: config.ownerName || repo,
+      taskId: task.id
+    };
+    await pushNotification(ct.repo, notif);
+  }
+
+  // Notification de complétion vers l'assigneur (via son dépôt)
+  if (type === 'completed' && task.assignedBy) {
+    const assignerContact = contacts.find(c => c.repo === task.assignedBy);
+    const targetRepo = assignerContact?.repo || task.assignedBy;
+    const notif = {
+      type: 'completed',
+      taskTitle: task.title,
+      from: config.ownerName || repo,
+      taskId: task.id
+    };
+    await pushNotification(targetRepo, notif);
+  }
+}
+
+
+async function triggerNotification(task, type) {
+  if (!config.ghToken) return;
+  const ct = task.assigneeRef ? getContactByValue(task.assigneeRef) : null;
+  if (!ct || !ct.email) return;
+
+  try {
+    await fetch('https://api.github.com/repos/napolsg/' + repo + '/actions/workflows/notify.yml/dispatches', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'token ' + sanitize(config.ghToken),
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ref: 'main',
+        inputs: { task_id: String(task.id), to_email: ct.email, notif_type: type }
+      })
+    });
+    console.log('Notification ' + type + ' envoyée à ' + ct.email);
+    toast('Email envoyé à ' + ct.name, 'ok');
+  } catch(e) {
+    console.warn('Notification échouée:', e.message);
+  }
+}
+
+async function triggerCompletionNotification(task) {
+  // Quand une tâche reçue (assignedBy) est complétée, notifie l'assigneur
+  if (!task.assignedBy || !config.ghToken) return;
+  // Cherche l'email de l'assigneur dans les contacts
+  const ct = contacts.find(c => c.repo === task.assignedBy || c.name === task.assignedBy);
+  if (!ct || !ct.email) return;
+
+  try {
+    await fetch('https://api.github.com/repos/napolsg/' + repo + '/actions/workflows/notify.yml/dispatches', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'token ' + sanitize(config.ghToken),
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ref: 'main',
+        inputs: { task_id: String(task.id), to_email: ct.email, notif_type: 'completed' }
+      })
+    });
+    console.log('Notification complétion envoyée à ' + ct.email);
+  } catch(e) {
+    console.warn('Notification complétion échouée:', e.message);
+  }
 }
 
 function render() { renderTasks(); updateStats(); renderChips(); renderLog(); updateNextSend(); populateAssigneeSelects(); }

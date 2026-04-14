@@ -3,21 +3,32 @@ const fs = require('fs');
 
 const octokit = new Octokit({ auth: process.env.MY_GITHUB_TOKEN });
 const owner = 'napolsg';
-const repo  = 'taskmail'; // sera remplacé pour taskmail-MA
+const repo  = 'taskmail';
 
 const raw      = JSON.parse(fs.readFileSync('tasks.json', 'utf8'));
 const tasks    = Array.isArray(raw) ? raw : (raw.tasks || []);
-const deleted  = new Set(Array.isArray(raw) ? [] : (raw.deletedIds || []));
+const deletedIds = Array.isArray(raw) ? [] : (raw.deletedIds || []);
+
+// Récupère les contacts depuis config.json pour trouver le dépôt cible
+const config   = fs.existsSync('config.json') ? JSON.parse(fs.readFileSync('config.json', 'utf8')) : {};
+const contacts = config.contacts || [];
 
 // Groupe les tâches assignées par dépôt cible
 const byRepo = {};
 tasks.forEach(t => {
   if (!t.assigneeRef || !t.assigneeRef.startsWith('__contact_')) return;
   if (t.done) return;
-  if (!t.assignee || t.assignee === '') return;
-  if (t.assignedBy) return; // tâche reçue d'un autre dépôt, on ne la repousse pas
-  const targetRepo = t.assignee;
-  if (!targetRepo || targetRepo === repo) return;
+  if (t.assignedBy) return; // tâche reçue, on ne la repousse pas
+
+  // Trouve le contact via l'index dans assigneeRef (__contact_0__ -> index 0)
+  const match = t.assigneeRef.match(/__contact_(\d+)__/);
+  if (!match) return;
+  const idx = parseInt(match[1]);
+  const ct  = contacts[idx];
+  if (!ct || !ct.repo) return;
+
+  const targetRepo = ct.repo;
+  if (targetRepo === repo) return;
   if (!byRepo[targetRepo]) byRepo[targetRepo] = [];
   byRepo[targetRepo].push(t);
 });
@@ -34,7 +45,7 @@ async function pushToRepo(targetRepo, newTasks) {
       .filter(t => !remoteIds.has(String(t.id)))
       .map(t => ({
         ...t,
-        assignedBy: t.assignedBy || repo,
+        assignedBy: config.ownerName || repo,
         assigneeRef: '',
         assignee: ''
       }));
@@ -54,7 +65,7 @@ async function pushToRepo(targetRepo, newTasks) {
       content, sha: data.sha
     });
 
-    console.log(`${toAdd.length} tâche(s) poussée(s) vers ${targetRepo}: ${toAdd.map(t => t.title).join(', ')}`);
+    console.log(`${toAdd.length} tache(s) poussee(s) vers ${targetRepo}: ${toAdd.map(t => t.title).join(', ')}`);
   } catch(e) {
     console.error(`Erreur push vers ${targetRepo}:`, e.message);
   }
@@ -62,7 +73,7 @@ async function pushToRepo(targetRepo, newTasks) {
 
 (async () => {
   if (!Object.keys(byRepo).length) {
-    console.log('Aucune tâche assignée à pousser');
+    console.log('Aucune tache assignee a pousser');
     return;
   }
   for (const [targetRepo, repoTasks] of Object.entries(byRepo)) {

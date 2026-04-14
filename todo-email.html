@@ -470,7 +470,7 @@ html, body {
     <input type="email" id="add-contact-email" placeholder="email@exemple.com" style="width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
     <input type="hidden" id="add-contact-type" value="email">
     <input type="hidden" id="add-contact-repo" value="">
-    <button onclick="saveNewContact()" style="width:100%; background:#1C1C1E; color:white; border:none; border-radius:8px; padding:10px; font-size:0.85rem; font-weight:700; cursor:pointer;">Ajouter</button>
+    <button onclick="saveContactForm()" style="width:100%; background:#1C1C1E; color:white; border:none; border-radius:8px; padding:10px; font-size:0.85rem; font-weight:700; cursor:pointer;">Ajouter</button>
   </div>
 </div>
 
@@ -508,8 +508,7 @@ html, body {
     <input class="sheet-input" type="text" id="cf-name" placeholder="Nom" style="margin-bottom:6px;">
     <input class="sheet-input" type="email" id="cf-email" placeholder="email@exemple.com" style="margin-bottom:6px;">
     <input class="sheet-input" type="text" id="cf-repo" placeholder="Dépôt GitHub (ex: taskmail-MA) — optionnel" style="margin-bottom:6px;">
-    <input type="hidden" id="cf-type" value="email">
-    <div style="display:flex; gap:6px;">
+        <div style="display:flex; gap:6px;">
       <button onclick="saveContactForm()" style="flex:1; background:#1C1C1E; color:white; border:none; border-radius:9px; padding:10px; font-size:0.85rem; font-weight:700; cursor:pointer;">Enregistrer</button>
       <button onclick="cancelContactForm()" style="flex:1; background:#F2F2F7; color:#3C3C43; border:none; border-radius:9px; padding:10px; font-size:0.85rem; font-weight:600; cursor:pointer;">Annuler</button>
     </div>
@@ -550,20 +549,20 @@ html, body {
     </div>
     <div id="new-contact-form" style="display:none; padding:10px 14px; background:#F2F2F7; border-radius:8px; margin:0 0 8px; gap:6px; flex-direction:column;">
       <input class="sheet-input" type="text" id="contact-name" placeholder="Nom du contact" style="margin-bottom:6px;">
-      <select id="contact-type" onchange="toggleContactType('edit')" class="sheet-input" style="margin-bottom:6px;">
+      <select id="contact-type" class="sheet-input" style="margin-bottom:6px;">
         <option value="repo">Dépôt GitHub</option>
         <option value="email">Email</option>
       </select>
       <input class="sheet-input" type="text" id="contact-repo" placeholder="ex: taskmail-MA" style="margin-bottom:0;">
       <input class="sheet-input" type="email" id="contact-email" placeholder="email@exemple.com" style="display:none;">
-      <button onclick="saveNewContact()" style="background:#1C1C1E;color:white;border:none;border-radius:8px;padding:8px;font-size:0.82rem;font-weight:700;cursor:pointer;margin-top:2px;">Ajouter le contact</button>
+      <button onclick="saveContactForm()" style="background:#1C1C1E;color:white;border:none;border-radius:8px;padding:8px;font-size:0.82rem;font-weight:700;cursor:pointer;margin-top:2px;">Ajouter le contact</button>
     </div>
   </div>
   <button class="sheet-btn btn-blue" onclick="saveEdit()">Enregistrer</button>
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v7.7</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.0</div>
 
 <div id="toasts"></div>
 
@@ -842,7 +841,6 @@ function addTask() {
   const newTask = tasks[0];
   if (newTask && newTask.assigneeRef && newTask.assigneeRef.startsWith('__contact_')) {
     // Attend 5s que tasks.json soit bien uploadé sur GitHub avant d'envoyer la notif
-    setTimeout(() => triggerNotification(newTask, 'assigned'), 15000);
   }
 }
 
@@ -1182,8 +1180,6 @@ function openAddContact() {
   document.getElementById('cf-name').value = '';
   document.getElementById('cf-repo').value = '';
   document.getElementById('cf-email').value = '';
-  document.getElementById('cf-type').value = 'repo';
-  toggleContactType('cf');
   document.getElementById('contact-edit-form').style.display = 'block';
 }
 
@@ -1245,29 +1241,6 @@ function populateAssigneeSelects() {
   });
 }
 
-function toggleContactType(context) {
-  let typeId, repoId, emailId;
-  if (context === 'add') {
-    typeId = 'add-contact-type'; repoId = 'add-contact-repo'; emailId = 'add-contact-email';
-  } else if (context === 'cf') {
-    typeId = 'cf-type'; repoId = 'cf-repo'; emailId = 'cf-email';
-  } else {
-    typeId = 'contact-type'; repoId = 'contact-repo'; emailId = 'contact-email';
-  }
-  const type  = document.getElementById(typeId)?.value;
-  const repo  = document.getElementById(repoId);
-  const email = document.getElementById(emailId);
-  if (!repo || !email) return;
-  if (type === 'repo') {
-    repo.style.display  = 'block';
-    email.style.display = 'none';
-    email.value = '';
-  } else {
-    repo.style.display  = 'none';
-    email.style.display = 'block';
-    repo.value = '';
-  }
-}
 
 function onAssigneeChange(sel) {
   if (!sel) return;
@@ -1290,38 +1263,10 @@ function onAssigneeChange(sel) {
   }
 }
 
-function saveNewContact() {
-  // Lit depuis le formulaire visible (barre d'ajout ou feuille d'édition)
-  const addForm  = document.getElementById('add-bar-contact-form');
-  const fromAdd  = addForm && addForm.style.display !== 'none';
-  const nameId   = fromAdd ? 'add-contact-name'  : 'contact-name';
-  const emailId  = fromAdd ? 'add-contact-email' : 'contact-email';
-  const repoId = fromAdd ? 'add-contact-repo' : 'contact-repo';
-  const name  = (document.getElementById(nameId)?.value  || '').trim();
-  const email = (document.getElementById(emailId)?.value || '').trim();
-  const repo  = (document.getElementById(repoId)?.value  || '').trim();
-  if (!name) { toast('Nom requis', 'err'); return; }
-  if (!email && !repo) { toast('Email ou dépôt GitHub requis', 'err'); return; }
-  if (contacts.find(ct => ct.email === email)) { toast('Contact déjà existant', 'info'); return; }
-  contacts.push({ name, email, repo });
-  saveContacts();
-  populateAssigneeSelects();
-  // Sélectionne le nouveau contact dans le bon select
-  const editForm2 = document.getElementById('new-contact-form');
-  const addForm2  = document.getElementById('add-bar-contact-form');
-  const fromAdd2  = addForm2 && addForm2.style.display !== 'none';
-  const triggeredBy = fromAdd2 ? (addForm2.dataset.triggeredBy || 'new-assignee') : (editForm2?.dataset.triggeredBy || 'e-assignee');
-  const sel = document.getElementById(triggeredBy);
-  const newIdx = contacts.length - 1;
-  if (sel) sel.value = '__contact_' + newIdx + '__';
-  if (editForm2) editForm2.style.display = 'none';
-  if (addForm2)  addForm2.style.display  = 'none';
-  toast('Contact ' + name + ' ajouté', 'ok');
-}
 
 function getAssigneeEmail(val) {
   if (!val || val === '--' || val === '' ) return '';
-  if (val === '__me__') return config.ownerEmail || '';
+  if (val === '__me__') return '';
   if (val === '__new__') return '';
   if (val.startsWith('__contact_')) {
     const idx = parseInt(val.replace('__contact_', '').replace('__', ''));
@@ -1354,80 +1299,8 @@ function clearDone() {
   toast('Tâches faites supprimées', 'ok');
 }
 
-async function triggerNotification(task, type) {
-  if (!config.ghToken) return;
-  const ct = task.assigneeRef ? getContactByValue(task.assigneeRef) : null;
-
-  // Notification via email si contact avec email
-  if (ct && ct.email) {
-    try {
-      await fetch('https://api.github.com/repos/napolsg/' + repo + '/actions/workflows/notify.yml/dispatches', {
-        method: 'POST',
-        headers: {
-          'Authorization': 'token ' + sanitize(config.ghToken),
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ref: 'main',
-          inputs: { task_id: String(task.id), to_email: ct.email, notif_type: type }
-        })
-      });
-      console.log('Notif email envoyée à ' + ct.email);
-    } catch(e) { console.warn('Notif email échouée:', e.message); }
-  }
-
-  // Notification via dépôt GitHub si contact avec repo
-  if (ct && ct.repo) {
-    const notif = {
-      type,
-      taskTitle: task.title,
-      from: config.ownerName || repo,
-      taskId: task.id
-    };
-    await pushNotification(ct.repo, notif);
-  }
-
-  // Notification de complétion vers l'assigneur (via son dépôt)
-  if (type === 'completed' && task.assignedBy) {
-    const assignerContact = contacts.find(c => c.repo === task.assignedBy);
-    const targetRepo = assignerContact?.repo || task.assignedBy;
-    const notif = {
-      type: 'completed',
-      taskTitle: task.title,
-      from: config.ownerName || repo,
-      taskId: task.id
-    };
-    await pushNotification(targetRepo, notif);
-  }
-}
 
 
-async function triggerNotification(task, type) {
-  if (!config.ghToken) return;
-  const ct = task.assigneeRef ? getContactByValue(task.assigneeRef) : null;
-  // Accepte le contact s'il a un email, même s'il a aussi un dépôt
-  if (!ct || !ct.email) return;
-
-  try {
-    await fetch('https://api.github.com/repos/napolsg/' + repo + '/actions/workflows/notify.yml/dispatches', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'token ' + sanitize(config.ghToken),
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        ref: 'main',
-        inputs: { task_id: String(task.id), to_email: ct.email, notif_type: type }
-      })
-    });
-    console.log('Notification ' + type + ' envoyée à ' + ct.email);
-    toast('Email envoyé à ' + ct.name, 'ok');
-  } catch(e) {
-    console.warn('Notification échouée:', e.message);
-  }
-}
 
 async function triggerCompletionNotification(task) {
   // Quand une tâche reçue (assignedBy) est complétée, notifie l'assigneur

@@ -1,7 +1,7 @@
 const { Octokit } = require('@octokit/rest');
 const fs = require('fs');
 
-const octokit = new Octokit({ auth: process.env.MY_GITHUB_TOKEN });
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
 const owner = 'napolsg';
 const repo  = 'taskmail';
 

@@ -1,6 +1,6 @@
 {
   "name": "La To Do du Bonheur",
-  "short_name": "TaskMail",
+  "short_name": "To Do Bonheur",
   "description": "Gestionnaire de tâches avec rappels email",
   "start_url": "/taskmail/todo-email.html",
   "display": "standalone",

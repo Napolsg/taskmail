@@ -1,5 +1,15 @@
 {
   "schedules": [
-    "08:00"
-  ]
+    "08:00",
+    "18:00"
+  ],
+  "contacts": [
+    {
+      "name": "Bitchoun",
+      "email": "mariealix.delassus@gmail.com",
+      "repo": "taskmail-MA",
+      "both": true
+    }
+  ],
+  "ownerName": ""
 }

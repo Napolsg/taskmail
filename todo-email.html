@@ -563,7 +563,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v7.5</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v7.6</div>
 
 <div id="toasts"></div>
 
@@ -1184,6 +1184,28 @@ function renderScheduleChipsConfig() {
 
 
 // ── CONTACTS ──────────────────────────────
+async function saveConfigToGitHub() {
+  if (!config.ghToken) return;
+  try {
+    const url = 'https://api.github.com/repos/napolsg/taskmail/contents/config.json';
+    const getRes = await fetch(url, {
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-cache'
+    });
+    const getData = await getRes.json();
+    const configData = { schedules, contacts, ownerName: config.ownerName || '' };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(configData, null, 2))));
+    await fetch(url, {
+      method: 'PUT',
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'TaskMail: mise a jour config', content, sha: getData.sha })
+    });
+    console.log('Config sauvegardée sur GitHub');
+  } catch(e) {
+    console.warn('Sauvegarde config GitHub échouée:', e.message);
+  }
+}
+
 function saveContacts() {
   localStorage.setItem('tm2_contacts', JSON.stringify(contacts));
   saveConfigToGitHub();

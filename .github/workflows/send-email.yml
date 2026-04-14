@@ -2,7 +2,7 @@ name: Envoyer email tâches
 
 on:
   schedule:
-    - cron: '0 * * * *'  # toutes les heures
+    - cron: '0,15,30,45 5-12 * * *'  # toutes les 15 min entre 5h et 20h UTC (7h-22h Paris)
   workflow_dispatch:
 
 jobs:

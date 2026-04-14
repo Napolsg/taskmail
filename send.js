@@ -8,15 +8,21 @@ const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 
 const now  = new Date();
 
-function isDST() {
-  const jan = new Date(now.getFullYear(), 0, 1).getTimezoneOffset();
-  const jul = new Date(now.getFullYear(), 6, 1).getTimezoneOffset();
-  return now.getTimezoneOffset() < Math.max(jan, jul);
+function isFranceDST(date) {
+  // Heure d'été en France : dernier dimanche de mars au dernier dimanche d'octobre
+  const year = date.getUTCFullYear();
+  // Dernier dimanche de mars
+  const lastSundayMarch = new Date(Date.UTC(year, 2, 31));
+  lastSundayMarch.setUTCDate(31 - lastSundayMarch.getUTCDay());
+  // Dernier dimanche d'octobre
+  const lastSundayOct = new Date(Date.UTC(year, 9, 31));
+  lastSundayOct.setUTCDate(31 - lastSundayOct.getUTCDay());
+  return date >= lastSundayMarch && date < lastSundayOct;
 }
 
 function toUTC(hhmm) {
   const [h, m] = hhmm.split(':').map(Number);
-  const offset = isDST() ? 2 : 1;
+  const offset = isFranceDST(now) ? 2 : 1;
   let utcH = h - offset;
   if (utcH < 0) utcH += 24;
   return utcH.toString().padStart(2,'0') + ':' + m.toString().padStart(2,'0');
@@ -25,7 +31,7 @@ function toUTC(hhmm) {
 const schedulesUTC = (config.schedules || []).map(toUTC);
 const shouldSend   = schedulesUTC.some(s => {
   const [h, m] = s.split(':').map(Number);
-  return now.getUTCHours() === h && now.getUTCMinutes() < 15;
+  return now.getUTCHours() === h && now.getUTCMinutes() < 59;
 });
 
 if (!shouldSend && process.env.FORCE !== 'true') {
@@ -116,6 +122,16 @@ function sendMail(to, subject, html) {
       buildHTML(ownerTasks, 'en attente')
     );
     console.log(`Email envoye au proprietaire (${ownerTasks.length} taches)`);
+  // Enregistre le verrou
+  if (lockKey) {
+    const today = now.toISOString().split('T')[0];
+    const lockData = fs_lock.existsSync(lockFile) ? JSON.parse(fs_lock.readFileSync(lockFile)) : {};
+    if (!lockData[today]) lockData[today] = [];
+    if (!lockData[today].includes(lockKey)) lockData[today].push(lockKey);
+    // Garde seulement les 2 derniers jours
+    Object.keys(lockData).filter(d => d < today).forEach(d => delete lockData[d]);
+    fs_lock.writeFileSync(lockFile, JSON.stringify(lockData));
+  }
   }
 
   // Emails aux assignés avec email uniquement (pas ceux avec dépôt GitHub)

@@ -563,7 +563,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v7.6</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v7.7</div>
 
 <div id="toasts"></div>
 
@@ -602,7 +602,6 @@ async function init() {
   await new Promise(r => setTimeout(r, 5000));
   await syncFromGitHub(true);
   // Pousse les tâches assignées sans écraser tasks.json local
-  await pushAssignedTasks();
   if (ind) ind.style.display = 'none';
 
   // Pas de tâches par défaut
@@ -972,61 +971,6 @@ function scheduleSyncToGitHub() {
   });
 }
 
-async function pushAssignedTasks() {
-  if (!config.ghToken) return;
-  const assigned = tasks.filter(t => t.assigneeRef && t.assigneeRef.startsWith('__contact_') && !t.done);
-  if (!assigned.length) return;
-
-  // Groupe par dépôt cible
-  const byRepo = {};
-  assigned.forEach(t => {
-    const ct = getContactByValue(t.assigneeRef);
-    if (!ct || !ct.repo) return;
-    if (!byRepo[ct.repo]) byRepo[ct.repo] = [];
-    byRepo[ct.repo].push(t);
-  });
-
-  for (const [targetRepo, repoTasks] of Object.entries(byRepo)) {
-    try {
-      const url = 'https://api.github.com/repos/napolsg/' + targetRepo + '/contents/tasks.json';
-      // Re-lit le SHA juste avant d'écrire pour éviter les conflits 409
-      const res = await fetch(url, {
-        headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' },
-        cache: 'no-cache'
-      });
-      if (!res.ok) { console.warn('Push: dépôt ' + targetRepo + ' inaccessible'); continue; }
-      const data = await res.json();
-      const binary = atob(data.content.replace(/\s/g, ''));
-      const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
-      const parsedRemote = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-      const remoteTasks = Array.isArray(parsedRemote) ? parsedRemote : (parsedRemote.tasks || []);
-
-      const remoteIds = new Set(remoteTasks.map(t => String(t.id)));
-      const newTasks = repoTasks.filter(t => !remoteIds.has(String(t.id))).map(t => ({
-        ...t,
-        assignedBy: config.ownerName || repo,
-        assigneeRef: '',
-        assignee: ''
-      }));
-      if (!newTasks.length) { console.log('Push: rien de nouveau pour ' + targetRepo); continue; }
-
-      const merged = [...newTasks, ...remoteTasks];
-      const content = btoa(unescape(encodeURIComponent(JSON.stringify({ tasks: merged, deletedIds: [] }, null, 2))));
-      const putRes = await fetch(url, {
-        method: 'PUT',
-        headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'TaskMail: tache assignee depuis ' + repo, content, sha: data.sha })
-      });
-      if (putRes.status === 409) {
-        console.warn('Conflit 409 sur ' + targetRepo + ' - sera retenté au prochain cycle');
-      }
-      console.log('Taches poussees vers ' + targetRepo + ' : ' + newTasks.map(t => t.title).join(', '));
-      toast(newTasks.length + ' tâche(s) envoyée(s) vers ' + targetRepo, 'ok');
-    } catch(e) {
-      console.warn('Push vers ' + targetRepo + ' échoué:', e.message);
-    }
-  }
-}
 
 async function syncToGitHub() {
   if (!config.ghToken) return;

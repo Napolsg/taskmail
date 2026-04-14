@@ -569,7 +569,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v5.9</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v6.0</div>
 
 <div id="toasts"></div>
 
@@ -860,9 +860,58 @@ function toggleTask(id) {
   if (t) {
     t.done = !t.done;
     save(); renderTasks(); updateStats(); tickClock();
+    if (t.assignedBy) {
+      // Sync le statut done vers le dépôt de l'assigneur
+      syncTaskStatusToAssigner(t);
+    }
     if (t.done && t.assignedBy) {
       triggerCompletionNotification(t);
     }
+  }
+}
+
+async function syncTaskStatusToAssigner(task) {
+  if (!config.ghToken || !task.assignedBy) return;
+  const targetRepo = task.assignedBy;
+  try {
+    const url = 'https://api.github.com/repos/napolsg/' + targetRepo + '/contents/tasks.json';
+    const res = await fetch(url, {
+      headers: { 'Authorization': 'token ' + sanitize(config.ghToken), 'Accept': 'application/vnd.github.v3+json' },
+      cache: 'no-cache'
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const binary = atob(data.content.replace(/\s/g, ''));
+    const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+    const parsed = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+    const remoteTasks = Array.isArray(parsed) ? parsed : (parsed.tasks || []);
+    const remoteDeleted = Array.isArray(parsed) ? [] : (parsed.deletedIds || []);
+
+    // Trouve la tâche correspondante chez l'assigneur
+    const remoteTask = remoteTasks.find(t => String(t.id) === String(task.id));
+    if (!remoteTask) return;
+
+    // Met à jour le statut done
+    remoteTask.done = task.done;
+
+    const payload = { tasks: remoteTasks, deletedIds: remoteDeleted };
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+    await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + sanitize(config.ghToken),
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: 'TaskMail: mise a jour statut tache',
+        content,
+        sha: data.sha
+      })
+    });
+    console.log('Statut tache sync vers ' + targetRepo);
+  } catch(e) {
+    console.warn('Sync statut echoue:', e.message);
   }
 }
 

@@ -1,11 +1,9 @@
 const nodemailer = require('nodemailer');
 const fs = require('fs');
 
-const tasks  = JSON.parse(fs.readFileSync('tasks.json', 'utf8'));
-const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
-
-const raw        = Array.isArray(tasks) ? { tasks, deletedIds: [] } : tasks;
-const allTasks   = raw.tasks || [];
+const raw      = JSON.parse(fs.readFileSync('tasks.json', 'utf8'));
+const allTasks = Array.isArray(raw) ? raw : (raw.tasks || []);
+const config   = fs.existsSync('config.json') ? JSON.parse(fs.readFileSync('config.json', 'utf8')) : {};
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -15,7 +13,6 @@ const transporter = nodemailer.createTransport({
 const pLabel = { high: 'Urgent', medium: 'Moyen', low: 'Faible' };
 const pColor = { high: '#A32D2D', medium: '#854F0B', low: '#3B6D11' };
 const pBg    = { high: '#FCEBEB', medium: '#FAEEDA', low: '#EAF3DE' };
-const APP_URL = process.env.APP_URL || 'https://napolsg.github.io/taskmail/todo-email.html';
 
 const now     = new Date();
 const dateStr = now.toLocaleString('fr-FR', {
@@ -23,16 +20,10 @@ const dateStr = now.toLocaleString('fr-FR', {
   hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris'
 });
 
-function buildNotifHTML(task, type) {
-  const isNew       = type === 'assigned';
-  const headerColor = isNew ? 'linear-gradient(135deg,#FF6B6B,#FFD93D)' : 'linear-gradient(135deg,#6BCB77,#FFD93D)';
-  const headerText  = isNew
-    ? 'Nouvelle tâche assignée'
-    : 'Tâche complétée';
-  const bodyText = isNew
-    ? 'Une nouvelle tâche vous a été assignée :'
-    : 'La tâche suivante a été complétée :';
+const APP_URL = process.env.APP_URL || 'https://napolsg.github.io/taskmail/todo-email.html';
 
+function buildHTML(task, type) {
+  const headerText = type === 'assigned' ? 'Nouvelle tâche assignée' : 'Tâche complétée';
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
   <body style="margin:0;padding:0;background:#F2F2F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F7;padding:32px 16px;">
@@ -52,14 +43,13 @@ function buildNotifHTML(task, type) {
             </tr></table>
           </td></tr>
           <tr><td style="background:white;padding:20px 28px;">
-            <p style="font-size:14px;color:#3C3C43;margin:0 0 16px;">${bodyText}</p>
             <div style="background:#F2F2F7;border-radius:12px;padding:14px 16px;">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <span style="background:${pBg[task.priority]};color:${pColor[task.priority]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">${pLabel[task.priority]}</span>
                 <span style="font-size:15px;color:#1C1C1E;font-weight:600;">${task.title}</span>
                 ${task.project ? `<span style="font-size:12px;color:#8E8E93;">— ${task.project}</span>` : ''}
               </div>
-              ${task.assignedBy ? `<p style="font-size:12px;color:#8E8E93;margin:8px 0 0;">Assigné par : ${task.assignedBy}</p>` : ''}
+              ${task.assignedBy ? `<p style="font-size:12px;color:#8E8E93;margin:8px 0 0;">${type === 'assigned' ? 'Assigné par' : 'Complété par'} : ${task.assignedBy}</p>` : ''}
             </div>
           </td></tr>
           <tr><td style="background:white;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
@@ -80,25 +70,50 @@ function sendMail(to, subject, html) {
 }
 
 (async () => {
-  const type   = process.env.NOTIF_TYPE || 'assigned'; // 'assigned' ou 'completed'
-  const taskId = process.env.TASK_ID;
-  const toEmail = process.env.TO_EMAIL;
+  const eventName = process.env.GITHUB_EVENT || 'workflow_dispatch';
 
-  if (!taskId || !toEmail) {
-    console.log('TASK_ID ou TO_EMAIL manquant');
-    process.exit(0);
+  if (eventName === 'push') {
+    // Déclenché par un push sur tasks.json
+    // Cherche les tâches nouvellement assignées (créées dans les 2 dernières minutes)
+    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+    const newAssigned = allTasks.filter(t =>
+      t.assignedBy &&
+      !t.done &&
+      t.created &&
+      new Date(t.created) > twoMinutesAgo
+    );
+
+    if (!newAssigned.length) {
+      console.log('Aucune nouvelle tâche assignée récente');
+      return;
+    }
+
+    for (const task of newAssigned) {
+      const toEmail = process.env.GMAIL_USER;
+      if (!toEmail) continue;
+      await sendMail(
+        toEmail,
+        `To Do du Bonheur — Nouvelle tâche : ${task.title}`,
+        buildHTML(task, 'assigned')
+      );
+      console.log(`Notification push envoyée pour : ${task.title}`);
+    }
+  } else {
+    // Déclenché manuellement (workflow_dispatch)
+    const taskId  = process.env.TASK_ID;
+    const toEmail = process.env.TO_EMAIL;
+    const type    = process.env.NOTIF_TYPE || 'assigned';
+
+    if (!taskId || !toEmail) { console.log('TASK_ID ou TO_EMAIL manquant'); return; }
+
+    const task = allTasks.find(t => String(t.id) === String(taskId));
+    if (!task) { console.log('Tâche non trouvée:', taskId); return; }
+
+    const subject = type === 'assigned'
+      ? `To Do du Bonheur — Nouvelle tâche : ${task.title}`
+      : `To Do du Bonheur — Tâche complétée : ${task.title}`;
+
+    await sendMail(toEmail, subject, buildHTML(task, type));
+    console.log(`Notification ${type} envoyée à ${toEmail}`);
   }
-
-  const task = allTasks.find(t => String(t.id) === String(taskId));
-  if (!task) {
-    console.log('Tâche non trouvée:', taskId);
-    process.exit(0);
-  }
-
-  const subject = type === 'assigned'
-    ? `TaskMail — Nouvelle tâche : ${task.title}`
-    : `TaskMail — Tâche complétée : ${task.title}`;
-
-  await sendMail(toEmail, subject, buildNotifHTML(task, type));
-  console.log(`Notification envoyée à ${toEmail} (${type})`);
 })();

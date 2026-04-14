@@ -1,6 +1,9 @@
 name: Notification tâche
 
 on:
+  push:
+    paths:
+      - 'tasks.json'
   workflow_dispatch:
     inputs:
       task_id:
@@ -30,4 +33,5 @@ jobs:
           TASK_ID: ${{ inputs.task_id }}
           TO_EMAIL: ${{ inputs.to_email }}
           NOTIF_TYPE: ${{ inputs.notif_type }}
+          GITHUB_EVENT: ${{ github.event_name }}
         run: node notify.js

@@ -137,7 +137,7 @@ function sendMail(to, subject, html) {
   if (ownerTasks.length) {
     await sendMail(
       process.env.GMAIL_USER,
-      `TaskMail -- ${ownerTasks.length} tache${ownerTasks.length > 1 ? 's' : ''} a faire`,
+      `To Do du Bonheur -- ${ownerTasks.length} tache${ownerTasks.length > 1 ? 's' : ''} a faire`,
       buildHTML(ownerTasks, 'en attente')
     );
     console.log(`Email envoye au proprietaire (${ownerTasks.length} taches)`);
@@ -165,7 +165,7 @@ function sendMail(to, subject, html) {
   for (const [email, assignedTasks] of Object.entries(byAssignee)) {
     await sendMail(
       email,
-      `TaskMail -- ${assignedTasks.length} tache${assignedTasks.length > 1 ? 's' : ''} qui vous sont assignees`,
+      `To Do du Bonheur -- ${assignedTasks.length} tache${assignedTasks.length > 1 ? 's' : ''} qui vous sont assignees`,
       buildHTML(assignedTasks, 'assignees')
     );
     console.log(`Email envoye a ${email} (${assignedTasks.length} taches)`);

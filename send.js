@@ -117,7 +117,7 @@ function buildHTML(taskList, recipientLabel) {
 
 function sendMail(to, subject, html) {
   return new Promise((resolve, reject) => {
-    transporter.sendMail({ from: `TaskMail <${process.env.GMAIL_USER}>`, to, subject, html }, (err, info) => {
+    transporter.sendMail({ from: `ToDoduBonheur <${process.env.GMAIL_USER}>`, to, subject, html }, (err, info) => {
       if (err) reject(err); else resolve(info);
     });
   });

@@ -563,7 +563,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v7.1</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v7.3</div>
 
 <div id="toasts"></div>
 
@@ -860,8 +860,9 @@ function toggleTask(id) {
       syncTaskStatusToAssigner(t);
     }
     if (t.done && t.assignedBy) {
-      setTimeout(() => triggerCompletionNotification(t), 15000);
+      scheduleSyncToGitHub().then(() => triggerCompletionNotification(t));
     }
+
   }
 }
 
@@ -946,9 +947,7 @@ function saveEdit() {
   save(); renderTasks(); updateStats(); closeEdit();
   toast('Tâche mise à jour', 'ok');
   const updatedTask = tasks.find(t => t.id === editingId);
-  if (updatedTask && updatedTask.assigneeRef && updatedTask.assigneeRef !== prevAssignee) {
-    setTimeout(() => triggerNotification(updatedTask, 'assigned'), 15000);
-  }
+
 }
 
 function deleteEdit() {
@@ -968,9 +967,9 @@ function save() {
 }
 
 function scheduleSyncToGitHub() {
-  if (githubLock) { pendingSync = true; return; }
+  if (githubLock) { pendingSync = true; return Promise.resolve(); }
   githubLock = true;
-  syncToGitHub().finally(async () => {
+  return syncToGitHub().finally(async () => {
     await pushAssignedTasks();
     githubLock = false;
     if (pendingSync) { pendingSync = false; scheduleSyncToGitHub(); }

@@ -77,7 +77,7 @@ function buildHTML(taskList, recipientLabel) {
       <td style="padding:12px 16px;border-bottom:1px solid #F2F2F7;">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="background:${pBg[t.priority]};color:${pColor[t.priority]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;">${pLabel[t.priority]}</span>
-          <span style="font-size:14px;color:#1C1C1E;font-weight:500;">${t.title}</span>
+          <span style="font-size:14px;color:#1C1C1E !important;font-weight:500;">${t.title}</span>
           ${t.project ? `<span style="font-size:11px;color:#8E8E93;">-- ${t.project}</span>` : ''}
           ${t.assignedBy ? `<span style="font-size:11px;color:#185FA5;">Assigne par : ${t.assignedBy}</span>` : ''}
         </div>
@@ -85,7 +85,7 @@ function buildHTML(taskList, recipientLabel) {
     </tr>`).join('');
 
   return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
-  <body style="margin:0;padding:0;background:#F2F2F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <body style="margin:0;padding:0;background:#F2F2F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;" bgcolor="#F2F2F7">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F7;padding:32px 16px;">
       <tr><td>
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;">
@@ -103,10 +103,10 @@ function buildHTML(taskList, recipientLabel) {
               </td>
             </tr></table>
           </td></tr>
-          <tr><td style="background:white;">
+          <tr><td style="background:#FFFFFF;color:#1C1C1E;">
             <table width="100%" cellpadding="0" cellspacing="0">${rows}</table>
           </td></tr>
-          <tr><td style="background:white;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
+          <tr><td style="background:#FFFFFF;color:#1C1C1E;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
             <a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#FF6B6B,#FFD93D);color:white;text-decoration:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;">Ouvrir TaskMail</a>
           </td></tr>
         </table>

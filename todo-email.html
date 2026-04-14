@@ -569,7 +569,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v6.0</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v6.1</div>
 
 <div id="toasts"></div>
 
@@ -587,7 +587,7 @@ let schedules = JSON.parse(localStorage.getItem('tm2_schedules') || '["08:00","1
 let log       = JSON.parse(localStorage.getItem('tm2_log')       || '[]');
 let deleted   = new Set(JSON.parse(localStorage.getItem('tm2_deleted') || '[]'));
 let contacts  = JSON.parse(localStorage.getItem('tm2_contacts')  || JSON.stringify([
-  { name: 'Bitchoun', repo: 'taskmail-MA', email: 'mariealix.delassus@gmail.com' }
+  { name: 'Bitchoun', repo: 'taskmail-MA', email: 'mariealix.delassus@gmail.com', both: true }
 ]));
 let filter    = 'all';
 let editingId = null;
@@ -1457,6 +1457,7 @@ async function triggerNotification(task, type) {
 async function triggerNotification(task, type) {
   if (!config.ghToken) return;
   const ct = task.assigneeRef ? getContactByValue(task.assigneeRef) : null;
+  // Accepte le contact s'il a un email, même s'il a aussi un dépôt
   if (!ct || !ct.email) return;
 
   try {

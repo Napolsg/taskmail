@@ -1,28 +1,6 @@
 {
   "tasks": [
     {
-      "id": 1776174005401,
-      "title": "Vivre",
-      "priority": "medium",
-      "project": "",
-      "assignee": "",
-      "assigneeRef": "",
-      "done": true,
-      "created": "2026-04-14T13:40:05.401Z",
-      "assignedBy": "taskmail-MA"
-    },
-    {
-      "id": 1776173049819,
-      "title": "Biboulala",
-      "priority": "medium",
-      "project": "",
-      "assignee": "",
-      "assigneeRef": "",
-      "done": true,
-      "created": "2026-04-14T13:24:09.819Z",
-      "assignedBy": "taskmail-MA"
-    },
-    {
       "id": 1776172125081,
       "title": "Boubi",
       "priority": "medium",
@@ -32,53 +10,11 @@
       "done": false,
       "created": "2026-04-14T13:08:45.081Z",
       "assignedBy": "taskmail-MA"
-    },
-    {
-      "id": 1776171752851,
-      "title": "Bibou",
-      "priority": "medium",
-      "project": "",
-      "assignee": "",
-      "assigneeRef": "",
-      "done": true,
-      "created": "2026-04-14T13:02:32.851Z",
-      "assignedBy": "taskmail-MA"
-    },
-    {
-      "id": 1776171485424,
-      "title": "boubou",
-      "priority": "medium",
-      "project": "",
-      "assignee": "",
-      "assigneeRef": "",
-      "done": true,
-      "created": "2026-04-14T12:58:05.424Z",
-      "assignedBy": "taskmail-MA"
-    },
-    {
-      "id": 1776170687814,
-      "title": "Faire la vaisselle",
-      "priority": "medium",
-      "project": "",
-      "assignee": "",
-      "assigneeRef": "",
-      "done": true,
-      "created": "2026-04-14T12:44:47.814Z",
-      "assignedBy": "taskmail-MA"
-    },
-    {
-      "id": 1776168941304,
-      "title": "Napo",
-      "priority": "medium",
-      "project": "",
-      "assignee": "",
-      "assigneeRef": "",
-      "done": true,
-      "created": "2026-04-14T12:15:41.304Z",
-      "assignedBy": "taskmail-MA"
     }
   ],
   "deletedIds": [
+    "1776089241327",
+    "1776089248869",
     "1776073279291.3237",
     "1776075449758.869",
     "1776074940889",
@@ -99,18 +35,22 @@
     "1776074454656",
     "1776074418083.5205",
     "1776074418083.4592",
-    "1776089241327",
-    "1776089248869",
     "1776092637305.4001",
     "1776092637305.8157",
-    "1776094768126",
     "1776094490937",
     "1776094450869",
     "1776094418366",
+    "1776094768126",
     "1776095392631.4033",
     "1776095627743.194",
     "1776096074145",
     "1776095627743.8687",
-    "1776090794929"
+    "1776090794929",
+    "1776174005401",
+    "1776173049819",
+    "1776171752851",
+    "1776171485424",
+    "1776170687814",
+    "1776168941304"
   ]
 }

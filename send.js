@@ -9,12 +9,9 @@ const config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
 const now  = new Date();
 
 function isFranceDST(date) {
-  // Heure d'été en France : dernier dimanche de mars au dernier dimanche d'octobre
   const year = date.getUTCFullYear();
-  // Dernier dimanche de mars
   const lastSundayMarch = new Date(Date.UTC(year, 2, 31));
   lastSundayMarch.setUTCDate(31 - lastSundayMarch.getUTCDay());
-  // Dernier dimanche d'octobre
   const lastSundayOct = new Date(Date.UTC(year, 9, 31));
   lastSundayOct.setUTCDate(31 - lastSundayOct.getUTCDay());
   return date >= lastSundayMarch && date < lastSundayOct;
@@ -29,18 +26,17 @@ function toUTC(hhmm) {
 }
 
 const schedulesUTC = (config.schedules || []).map(toUTC);
-const shouldSend   = schedulesUTC.some(s => {
+const shouldSend = schedulesUTC.some(s => {
   const [h, m] = s.split(':').map(Number);
   return now.getUTCHours() === h && now.getUTCMinutes() < 59;
 });
 
 if (!shouldSend && process.env.FORCE !== 'true') {
-  console.log('Pas l\'heure d\'envoyer');
+  console.log("Pas l'heure d'envoyer");
   process.exit(0);
 }
 
 // Verrou anti-doublon
-const fs_lock = require('fs');
 const lockFile = '.send_lock';
 const lockKey = schedulesUTC.find(s => {
   const [h, m] = s.split(':').map(Number);
@@ -50,10 +46,10 @@ const lockKey = schedulesUTC.find(s => {
 }) || null;
 
 if (lockKey && process.env.FORCE !== 'true') {
-  const lockData = fs_lock.existsSync(lockFile) ? JSON.parse(fs_lock.readFileSync(lockFile)) : {};
+  const lockData = fs.existsSync(lockFile) ? JSON.parse(fs.readFileSync(lockFile)) : {};
   const today = now.toISOString().split('T')[0];
   if (lockData[today] && lockData[today].includes(lockKey)) {
-    console.log('Email deja envoye pour ' + lockKey + ' aujourd\'hui');
+    console.log('Email deja envoye pour ' + lockKey + " aujourd'hui");
     process.exit(0);
   }
 }
@@ -83,7 +79,7 @@ function buildHTML(taskList, recipientLabel) {
           <span style="background:${pBg[t.priority]};color:${pColor[t.priority]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;">${pLabel[t.priority]}</span>
           <span style="font-size:14px;color:#1C1C1E;font-weight:500;">${t.title}</span>
           ${t.project ? `<span style="font-size:11px;color:#8E8E93;">-- ${t.project}</span>` : ''}
-          ${t.assignedBy ? `<span style="font-size:11px;color:#185FA5;">Assigné par : ${t.assignedBy}</span>` : ''}
+          ${t.assignedBy ? `<span style="font-size:11px;color:#185FA5;">Assigne par : ${t.assignedBy}</span>` : ''}
         </div>
       </td>
     </tr>`).join('');
@@ -127,11 +123,11 @@ function sendMail(to, subject, html) {
   const pending = tasks.filter(t => !t.done && !deletedIds.has(String(t.id)));
   if (!pending.length) { console.log('Aucune tache en attente'); process.exit(0); }
 
-  // Toutes les tâches vont au propriétaire (y compris celles assignées par quelqu'un d'autre)
+  // Email au proprietaire : taches sans assigne ou recues d'un autre depot
   const ownerTasks = pending.filter(t =>
-    !t.assignee ||                              // pas d'assigné email
-    t.assignee === process.env.GMAIL_USER ||    // assigné à soi-même
-    t.assignedBy                                // reçue d'un autre dépôt
+    !t.assignee ||
+    t.assignee === process.env.GMAIL_USER ||
+    t.assignedBy
   );
 
   if (ownerTasks.length) {
@@ -141,22 +137,22 @@ function sendMail(to, subject, html) {
       buildHTML(ownerTasks, 'en attente')
     );
     console.log(`Email envoye au proprietaire (${ownerTasks.length} taches)`);
-  // Enregistre le verrou
-  if (lockKey) {
-    const today = now.toISOString().split('T')[0];
-    const lockData = fs_lock.existsSync(lockFile) ? JSON.parse(fs_lock.readFileSync(lockFile)) : {};
-    if (!lockData[today]) lockData[today] = [];
-    if (!lockData[today].includes(lockKey)) lockData[today].push(lockKey);
-    // Garde seulement les 2 derniers jours
-    Object.keys(lockData).filter(d => d < today).forEach(d => delete lockData[d]);
-    fs_lock.writeFileSync(lockFile, JSON.stringify(lockData));
-  }
   }
 
-  // Emails aux assignés avec email uniquement (pas ceux avec dépôt GitHub)
+  // Enregistre le verrou apres envoi
+  if (lockKey) {
+    const today = now.toISOString().split('T')[0];
+    const lockData = fs.existsSync(lockFile) ? JSON.parse(fs.readFileSync(lockFile)) : {};
+    if (!lockData[today]) lockData[today] = [];
+    if (!lockData[today].includes(lockKey)) lockData[today].push(lockKey);
+    Object.keys(lockData).filter(d => d < today).forEach(d => delete lockData[d]);
+    fs.writeFileSync(lockFile, JSON.stringify(lockData));
+  }
+
+  // Emails aux assignes avec email uniquement (verif que c'est bien un email)
   const byAssignee = {};
   pending
-    .filter(t => t.assignee && t.assignee !== process.env.GMAIL_USER && !t.assignedBy)
+    .filter(t => t.assignee && t.assignee !== process.env.GMAIL_USER && !t.assignedBy && t.assignee.includes('@'))
     .forEach(t => {
       if (!byAssignee[t.assignee]) byAssignee[t.assignee] = [];
       byAssignee[t.assignee].push(t);

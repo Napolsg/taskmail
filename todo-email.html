@@ -467,12 +467,9 @@ html, body {
   <div id="add-bar-contact-form" style="display:none; margin-top:8px; padding:12px; background:white; border-radius:10px; border:1px solid #E8E8E4;">
     <div style="font-size:0.75rem; font-weight:700; color:#6C6C68; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">Nouveau contact</div>
     <input type="text" id="add-contact-name" placeholder="Nom" style="width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
-    <select id="add-contact-type" onchange="toggleContactType('add')" style="width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
-      <option value="repo">Dépôt GitHub</option>
-      <option value="email">Email</option>
-    </select>
-    <input type="text" id="add-contact-repo" placeholder="ex: taskmail-MA" style="width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
-    <input type="email" id="add-contact-email" placeholder="email@exemple.com" style="display:none; width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
+    <input type="email" id="add-contact-email" placeholder="email@exemple.com" style="width:100%; background:#F2F2F7; border:1px solid #E8E8E4; border-radius:8px; padding:9px 10px; font-size:0.85rem; color:#1C1C1E; outline:none; margin-bottom:6px;">
+    <input type="hidden" id="add-contact-type" value="email">
+    <input type="hidden" id="add-contact-repo" value="">
     <button onclick="saveNewContact()" style="width:100%; background:#1C1C1E; color:white; border:none; border-radius:8px; padding:10px; font-size:0.85rem; font-weight:700; cursor:pointer;">Ajouter</button>
   </div>
 </div>
@@ -509,12 +506,9 @@ html, body {
     <div style="font-size:0.7rem; font-weight:700; color:#8E8E93; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:10px;" id="contact-form-title">Nouveau contact</div>
     <input type="hidden" id="editing-contact-idx" value="-1">
     <input class="sheet-input" type="text" id="cf-name" placeholder="Nom" style="margin-bottom:6px;">
-    <select id="cf-type" onchange="toggleContactType('cf')" class="sheet-input" style="margin-bottom:6px;">
-      <option value="repo">Dépôt GitHub</option>
-      <option value="email">Email</option>
-    </select>
-    <input class="sheet-input" type="text" id="cf-repo" placeholder="ex: taskmail-MA" style="margin-bottom:6px;">
-    <input class="sheet-input" type="email" id="cf-email" placeholder="email@exemple.com" style="display:none; margin-bottom:6px;">
+    <input class="sheet-input" type="email" id="cf-email" placeholder="email@exemple.com" style="margin-bottom:6px;">
+    <input class="sheet-input" type="text" id="cf-repo" placeholder="Dépôt GitHub (ex: taskmail-MA) — optionnel" style="margin-bottom:6px;">
+    <input type="hidden" id="cf-type" value="email">
     <div style="display:flex; gap:6px;">
       <button onclick="saveContactForm()" style="flex:1; background:#1C1C1E; color:white; border:none; border-radius:9px; padding:10px; font-size:0.85rem; font-weight:700; cursor:pointer;">Enregistrer</button>
       <button onclick="cancelContactForm()" style="flex:1; background:#F2F2F7; color:#3C3C43; border:none; border-radius:9px; padding:10px; font-size:0.85rem; font-weight:600; cursor:pointer;">Annuler</button>
@@ -569,7 +563,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v6.1</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v6.9</div>
 
 <div id="toasts"></div>
 
@@ -851,7 +845,8 @@ function addTask() {
   save(); renderTasks(); updateStats(); tickClock();
   const newTask = tasks[0];
   if (newTask && newTask.assigneeRef && newTask.assigneeRef.startsWith('__contact_')) {
-    triggerNotification(newTask, 'assigned');
+    // Attend 5s que tasks.json soit bien uploadé sur GitHub avant d'envoyer la notif
+    setTimeout(() => triggerNotification(newTask, 'assigned'), 15000);
   }
 }
 
@@ -952,7 +947,7 @@ function saveEdit() {
   toast('Tâche mise à jour', 'ok');
   const updatedTask = tasks.find(t => t.id === editingId);
   if (updatedTask && updatedTask.assigneeRef && updatedTask.assigneeRef !== prevAssignee) {
-    triggerNotification(updatedTask, 'assigned');
+    setTimeout(() => triggerNotification(updatedTask, 'assigned'), 15000);
   }
 }
 
@@ -1209,7 +1204,7 @@ function renderContactsList() {
     <div style="display:flex; align-items:center; justify-content:space-between; padding:11px 14px; border-bottom:0.5px solid #F2F2F7;">
       <div>
         <div style="font-size:0.88rem; font-weight:600; color:#1C1C1E;">${esc(ct.name)}</div>
-        <div style="font-size:0.72rem; color:#8E8E93;">${ct.repo ? 'GitHub: ' + ct.repo : ct.email || ''}</div>
+        <div style="font-size:0.72rem; color:#8E8E93;">${ct.repo ? 'Dépôt: ' + ct.repo : ''}${ct.repo && ct.email ? '<br>' : ''}${ct.email ? 'Email: ' + ct.email : ''}</div>
       </div>
       <div style="display:flex; gap:4px;">
         <button onclick="editContact(${i})" style="background:#F2F2F7; border:none; border-radius:7px; padding:5px 10px; font-size:0.75rem; color:#3C3C43; cursor:pointer;">✎</button>
@@ -1236,16 +1231,8 @@ function editContact(i) {
   document.getElementById('contact-form-title').textContent = 'Modifier le contact';
   document.getElementById('editing-contact-idx').value = i;
   document.getElementById('cf-name').value = ct.name || '';
-  if (ct.repo) {
-    document.getElementById('cf-type').value = 'repo';
-    document.getElementById('cf-repo').value = ct.repo;
-    document.getElementById('cf-email').value = '';
-  } else {
-    document.getElementById('cf-type').value = 'email';
-    document.getElementById('cf-email').value = ct.email || '';
-    document.getElementById('cf-repo').value = '';
-  }
-  toggleContactType('cf');
+  document.getElementById('cf-email').value = ct.email || '';
+  document.getElementById('cf-repo').value = ct.repo || '';
   document.getElementById('contact-edit-form').style.display = 'block';
 }
 
@@ -1264,7 +1251,7 @@ function saveContactForm() {
   const email = (document.getElementById('cf-email')?.value || '').trim();
   if (!name) { toast('Nom requis', 'err'); return; }
   if (!repo && !email) { toast('Dépôt ou email requis', 'err'); return; }
-  const ct = { name, repo: type === 'repo' ? repo : '', email: type === 'email' ? email : '' };
+  const ct = { name, email, repo: (document.getElementById('cf-repo')?.value || '').trim(), both: !!(email && (document.getElementById('cf-repo')?.value || '').trim()) };
   const idx = parseInt(document.getElementById('editing-contact-idx').value);
   if (idx >= 0) {
     contacts[idx] = ct;
@@ -1286,7 +1273,7 @@ function populateAssigneeSelects() {
   let opts = '<option value="">-- Personne --</option>';
   opts += '<option value="__me__">Moi</option>';
   contacts.forEach(function(ct, i) {
-    const label = ct.name + (ct.repo ? ' (' + ct.repo + ')' : ct.email ? ' (' + ct.email + ')' : '');
+    const label = ct.name;
     opts += '<option value="__contact_' + i + '__">' + label + '</option>';
   });
   opts += '<option value="__new__">+ Nouveau contact</option>';

@@ -89,21 +89,25 @@ function buildHTML(taskList, recipientLabel) {
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F7;padding:32px 16px;">
       <tr><td>
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;">
-          <tr><td style="background:#185FA5;border-radius:16px 16px 0 0;padding:24px 28px 0;">
-            <div style="font-size:22px;font-weight:800;color:#E6F1FB;">TaskMail</div>
-            <div style="font-size:13px;color:#85B7EB;margin-top:4px;padding-bottom:20px;">${dateStr}</div>
-          </td></tr>
-          <tr><td style="background:#185FA5;padding:0 28px 20px;">
-            <div style="background:rgba(255,255,255,0.15);border-radius:10px;padding:12px 16px;display:inline-block;">
-              <span style="font-size:28px;font-weight:800;color:#E6F1FB;">${taskList.length}</span>
-              <span style="font-size:14px;color:#B5D4F4;margin-left:6px;">tache${taskList.length > 1 ? 's' : ''} ${recipientLabel}</span>
-            </div>
+          <tr><td style="background:linear-gradient(135deg,#FF6B6B,#FFD93D,#6BCB77);border-radius:16px 16px 0 0;padding:24px 28px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;">
+                <div style="font-size:20px;font-weight:800;color:white;text-transform:uppercase;letter-spacing:1px;">La To Do du Bonheur</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px;">${dateStr}</div>
+              </td>
+              <td style="vertical-align:middle;text-align:right;">
+                <div style="background:rgba(255,255,255,0.25);border-radius:10px;padding:10px 16px;display:inline-block;text-align:center;">
+                  <div style="font-size:28px;font-weight:800;color:white;line-height:1;">${taskList.length}</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.9);">tache${taskList.length > 1 ? 's' : ''} ${recipientLabel}</div>
+                </div>
+              </td>
+            </tr></table>
           </td></tr>
           <tr><td style="background:white;">
             <table width="100%" cellpadding="0" cellspacing="0">${rows}</table>
           </td></tr>
           <tr><td style="background:white;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
-            <a href="${APP_URL}" style="display:inline-block;background:#185FA5;color:#E6F1FB;text-decoration:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;">Ouvrir TaskMail</a>
+            <a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#FF6B6B,#FFD93D);color:white;text-decoration:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;">Ouvrir TaskMail</a>
           </td></tr>
         </table>
       </td></tr>

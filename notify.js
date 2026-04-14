@@ -25,7 +25,7 @@ const dateStr = now.toLocaleString('fr-FR', {
 
 function buildNotifHTML(task, type) {
   const isNew       = type === 'assigned';
-  const headerColor = isNew ? '#185FA5' : '#34C759';
+  const headerColor = isNew ? 'linear-gradient(135deg,#FF6B6B,#FFD93D)' : 'linear-gradient(135deg,#6BCB77,#FFD93D)';
   const headerText  = isNew
     ? 'Nouvelle tâche assignée'
     : 'Tâche complétée';
@@ -38,9 +38,18 @@ function buildNotifHTML(task, type) {
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F7;padding:32px 16px;">
       <tr><td>
         <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;">
-          <tr><td style="background:${headerColor};border-radius:16px 16px 0 0;padding:24px 28px;">
-            <div style="font-size:18px;font-weight:800;color:white;">${headerText}</div>
-            <div style="font-size:13px;color:rgba(255,255,255,0.8);margin-top:4px;">${dateStr}</div>
+          <tr><td style="background:linear-gradient(135deg,#FF6B6B,#FFD93D,#6BCB77);border-radius:16px 16px 0 0;padding:24px 28px;">
+            <table width="100%" cellpadding="0" cellspacing="0"><tr>
+              <td style="vertical-align:middle;">
+                <div style="font-size:20px;font-weight:800;color:white;text-transform:uppercase;letter-spacing:1px;">La To Do du Bonheur</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.85);margin-top:4px;">${dateStr}</div>
+              </td>
+              <td style="vertical-align:middle;text-align:right;">
+                <div style="background:rgba(255,255,255,0.25);border-radius:10px;padding:10px 16px;display:inline-block;text-align:center;">
+                  <div style="font-size:14px;font-weight:800;color:white;">${headerText}</div>
+                </div>
+              </td>
+            </tr></table>
           </td></tr>
           <tr><td style="background:white;padding:20px 28px;">
             <p style="font-size:14px;color:#3C3C43;margin:0 0 16px;">${bodyText}</p>
@@ -54,7 +63,7 @@ function buildNotifHTML(task, type) {
             </div>
           </td></tr>
           <tr><td style="background:white;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
-            <a href="${APP_URL}" style="display:inline-block;background:${headerColor};color:white;text-decoration:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;">Ouvrir TaskMail</a>
+            <a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#FF6B6B,#FFD93D);color:white;text-decoration:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;">Ouvrir TaskMail</a>
           </td></tr>
         </table>
       </td></tr>

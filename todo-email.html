@@ -563,7 +563,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v6.9</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v7.0</div>
 
 <div id="toasts"></div>
 
@@ -860,7 +860,7 @@ function toggleTask(id) {
       syncTaskStatusToAssigner(t);
     }
     if (t.done && t.assignedBy) {
-      triggerCompletionNotification(t);
+      setTimeout(() => triggerCompletionNotification(t), 15000);
     }
   }
 }
@@ -1471,8 +1471,16 @@ async function triggerCompletionNotification(task) {
   // Quand une tâche reçue (assignedBy) est complétée, notifie l'assigneur
   if (!task.assignedBy || !config.ghToken) return;
   // Cherche l'email de l'assigneur dans les contacts
-  const ct = contacts.find(c => c.repo === task.assignedBy || c.name === task.assignedBy);
-  if (!ct || !ct.email) return;
+  // Cherche par repo, nom ou ownerName
+  const ct = contacts.find(c => 
+    c.repo === task.assignedBy || 
+    c.name === task.assignedBy ||
+    c.name.toLowerCase() === task.assignedBy.toLowerCase()
+  );
+  if (!ct || !ct.email) {
+    console.warn('Contact assigneur non trouvé pour:', task.assignedBy, 'contacts:', contacts.map(c => c.name + '/' + c.repo));
+    return;
+  }
 
   try {
     await fetch('https://api.github.com/repos/napolsg/' + repo + '/actions/workflows/notify.yml/dispatches', {

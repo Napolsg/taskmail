@@ -39,6 +39,25 @@ if (!shouldSend && process.env.FORCE !== 'true') {
   process.exit(0);
 }
 
+// Verrou anti-doublon
+const fs_lock = require('fs');
+const lockFile = '.send_lock';
+const lockKey = schedulesUTC.find(s => {
+  const [h, m] = s.split(':').map(Number);
+  const scheduleMinutes = h * 60 + m;
+  const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+  return nowMinutes >= scheduleMinutes && nowMinutes < scheduleMinutes + 15;
+}) || null;
+
+if (lockKey && process.env.FORCE !== 'true') {
+  const lockData = fs_lock.existsSync(lockFile) ? JSON.parse(fs_lock.readFileSync(lockFile)) : {};
+  const today = now.toISOString().split('T')[0];
+  if (lockData[today] && lockData[today].includes(lockKey)) {
+    console.log('Email deja envoye pour ' + lockKey + ' aujourd\'hui');
+    process.exit(0);
+  }
+}
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_PASSWORD }

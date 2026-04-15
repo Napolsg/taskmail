@@ -435,9 +435,9 @@ html, body {
 <!-- FILTERS -->
 <div class="filters">
   <button class="fbtn active" onclick="setFilter('all',this)">Toutes</button>
-  <button class="fbtn" onclick="setFilter('active',this)">À faire</button>
-  <button class="fbtn" onclick="setFilter('done',this)">Faites ✓</button>
-  <button class="fbtn" onclick="setFilter('high',this)">🔴 Urgentes</button>
+  <button class="fbtn" onclick="setFilter('me',this)">Moi</button>
+  <button class="fbtn" id="filter-both-btn" onclick="setFilter('both',this)" style="display:none;"></button>
+  <button class="fbtn" id="filter-contact-btn" onclick="setFilter('contact',this)" style="display:none;"></button>
 </div>
 
 <!-- TASKS -->
@@ -562,7 +562,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.1</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.4</div>
 
 <div id="toasts"></div>
 
@@ -1043,8 +1043,8 @@ function renderTasks() {
       <div class="task-body" onclick="openEdit(${t.id})">
         <div class="task-title">${esc(t.title)}</div>
         ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ''}
-        ${t.assignee && t.assigneeRef ? '<div class="task-project" style="color:#2D5BE3;">Assigné à : ' + esc(getAssigneeLabel(t)) + '</div>' : ''}
-        ${t.assignedBy ? '<div class="task-project" style="color:#2eb88a;">Assigné par : ' + esc(t.assignedBy) + '</div>' : ''}
+
+        ${(t.assigneeRef || t.assignedBy) ? '<div class="task-project" style="color:' + (t.assignedBy ? '#2eb88a' : '#2D5BE3') + ';">Responsable : ' + esc(t.assignedBy || getAssigneeLabel(t)) + '</div>' : ''}
       </div>
       <button class="edit-btn" onclick="openEdit(${t.id})">✎</button>
     </div>
@@ -1231,14 +1231,24 @@ function populateAssigneeSelects() {
   let opts = '<option value="">-- Personne --</option>';
   opts += '<option value="__me__">Moi</option>';
   contacts.forEach(function(ct, i) {
-    const label = ct.name;
-    opts += '<option value="__contact_' + i + '__">' + label + '</option>';
+    opts += '<option value="__contact_' + i + '__">' + ct.name + '</option>';
+    if (ct.repo) {
+      opts += '<option value="__both_' + i + '__">' + ct.name + ' et moi</option>';
+    }
   });
   opts += '<option value="__new__">+ Nouveau contact</option>';
   ['new-assignee', 'e-assignee'].forEach(function(id) {
     const el = document.getElementById(id);
     if (el) el.innerHTML = opts;
   });
+  // Update filter button labels
+  if (contacts.length > 0) {
+    const ct = contacts[0];
+    const bothBtn = document.getElementById('filter-both-btn');
+    const contactBtn = document.getElementById('filter-contact-btn');
+    if (bothBtn) { bothBtn.textContent = ct.name + ' et moi'; bothBtn.style.display = ''; }
+    if (contactBtn) { contactBtn.textContent = ct.name; contactBtn.style.display = ''; }
+  }
 }
 
 
@@ -1285,9 +1295,12 @@ function getAssigneeLabel(t) {
 }
 
 function getContactByValue(val) {
-  if (!val || !val.startsWith('__contact_')) return null;
-  const idx = parseInt(val.replace('__contact_', '').replace('__', ''));
-  return contacts[idx] || null;
+  if (!val) return null;
+  if (val.startsWith('__contact_') || val.startsWith('__both_')) {
+    const idx = parseInt(val.replace('__contact_', '').replace('__both_', '').replace('__', ''));
+    return contacts[idx] || null;
+  }
+  return null;
 }
 
 function clearDone() {

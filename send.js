@@ -180,20 +180,4 @@ function sendMail(to, subject, html) {
   }
 
   // Emails aux assignes avec email uniquement (verif que c'est bien un email)
-  const byAssignee = {};
-  pending
-    .filter(t => t.assignee && t.assignee !== process.env.GMAIL_USER && !t.assignedBy && t.assignee.includes('@'))
-    .forEach(t => {
-      if (!byAssignee[t.assignee]) byAssignee[t.assignee] = [];
-      byAssignee[t.assignee].push(t);
-    });
-
-  for (const [email, assignedTasks] of Object.entries(byAssignee)) {
-    await sendMail(
-      email,
-      `To Do du Bonheur -- ${assignedTasks.length} tâche${assignedTasks.length > 1 ? 's' : ''} qui vous sont assignees`,
-      buildHTML(assignedTasks, 'assignees')
-    );
-    console.log(`Email envoye a ${email} (${assignedTasks.length} taches)`);
-  }
 })();

@@ -26,30 +26,26 @@ function toUTC(hhmm) {
 }
 
 const schedulesUTC = (config.schedules || []).map(toUTC);
-const shouldSend = schedulesUTC.some(s => {
-  const [h, m] = s.split(':').map(Number);
-  return now.getUTCHours() === h && now.getUTCMinutes() < 59;
-});
+const today = now.toISOString().split('T')[0];
+const sentToday = config.sentToday || {};
 
-if (!shouldSend && process.env.FORCE !== 'true') {
-  console.log("Pas l'heure d'envoyer");
-  process.exit(0);
-}
-
-// Verrou anti-doublon
-const lockFile = '.send_lock';
+// Trouve l'horaire dépassé le plus récent (sans limite de temps)
 const lockKey = schedulesUTC.find(s => {
   const [h, m] = s.split(':').map(Number);
   const scheduleMinutes = h * 60 + m;
   const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
-  return nowMinutes >= scheduleMinutes && nowMinutes < scheduleMinutes + 15;
+  return nowMinutes >= scheduleMinutes;
 }) || null;
 
+if (!lockKey && process.env.FORCE !== 'true') {
+  console.log("Pas encore l'heure d'envoyer");
+  process.exit(0);
+}
+
+// Verrou persistant dans config.json
 if (lockKey && process.env.FORCE !== 'true') {
-  const lockData = fs.existsSync(lockFile) ? JSON.parse(fs.readFileSync(lockFile)) : {};
-  const today = now.toISOString().split('T')[0];
-  if (lockData[today] && lockData[today].includes(lockKey)) {
-    console.log('Email deja envoye pour ' + lockKey + " aujourd'hui");
+  if (sentToday[today] && sentToday[today].includes(lockKey)) {
+    console.log('Email deja envoye pour ' + lockKey + ' aujourd\'hui');
     process.exit(0);
   }
 }
@@ -143,14 +139,30 @@ function sendMail(to, subject, html) {
     console.log(`Email envoye au proprietaire (${ownerTasks.length} taches)`);
   }
 
-  // Enregistre le verrou apres envoi
+  // Enregistre le verrou dans config.json sur GitHub
   if (lockKey) {
-    const today = now.toISOString().split('T')[0];
-    const lockData = fs.existsSync(lockFile) ? JSON.parse(fs.readFileSync(lockFile)) : {};
-    if (!lockData[today]) lockData[today] = [];
-    if (!lockData[today].includes(lockKey)) lockData[today].push(lockKey);
-    Object.keys(lockData).filter(d => d < today).forEach(d => delete lockData[d]);
-    fs.writeFileSync(lockFile, JSON.stringify(lockData));
+    try {
+      const { Octokit } = require('@octokit/rest');
+      const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+      const repoName = process.env.REPO_NAME || 'taskmail';
+      const { data } = await octokit.repos.getContent({ owner: 'napolsg', repo: repoName, path: 'config.json' });
+      const currentConfig = JSON.parse(Buffer.from(data.content, 'base64').toString());
+      if (!currentConfig.sentToday) currentConfig.sentToday = {};
+      // Garde seulement aujourd'hui
+      currentConfig.sentToday = { [today]: currentConfig.sentToday[today] || [] };
+      if (!currentConfig.sentToday[today].includes(lockKey)) {
+        currentConfig.sentToday[today].push(lockKey);
+      }
+      const content = Buffer.from(JSON.stringify(currentConfig, null, 2)).toString('base64');
+      await octokit.repos.createOrUpdateFileContents({
+        owner: 'napolsg', repo: repoName, path: 'config.json',
+        message: 'TaskMail: verrou email ' + lockKey,
+        content, sha: data.sha
+      });
+      console.log('Verrou enregistre pour ' + lockKey);
+    } catch(e) {
+      console.warn('Impossible d\'enregistrer le verrou:', e.message);
+    }
   }
 
   // Emails aux assignes avec email uniquement (verif que c'est bien un email)

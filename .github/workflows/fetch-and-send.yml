@@ -1,0 +1,30 @@
+name: Récupérer tâches et envoyer rappels
+
+on:
+  schedule:
+    - cron: '*/15 5-22 * * *'
+  workflow_dispatch:
+
+jobs:
+  fetch-and-send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install imap mailparser @octokit/rest nodemailer
+      - name: Récupérer tâches par email
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node fetch-tasks.js
+      - name: Envoyer rappels email
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+        run: node send.js

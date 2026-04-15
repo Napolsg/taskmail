@@ -1,19 +1,37 @@
 {
   "tasks": [
     {
-      "id": 1776239173135,
-      "title": "Test",
+      "id": 1776250692899,
+      "title": "Demander les dispos aux parents",
+      "priority": "high",
+      "project": "Anniversaire Côme",
+      "assignee": "mariealix.delassus@gmail.com",
+      "assigneeRef": "__contact_0__",
+      "done": false,
+      "created": "2026-04-15T10:58:12.899Z"
+    },
+    {
+      "id": 1776250627649,
+      "title": "Cadeau Tristan",
       "priority": "medium",
       "project": "",
-      "assignee": "",
-      "assigneeRef": "",
+      "assignee": "mariealix.delassus@gmail.com",
+      "assigneeRef": "__contact_0__",
       "done": false,
-      "created": "2026-04-15T07:46:13.135Z"
+      "created": "2026-04-15T10:57:07.649Z"
+    },
+    {
+      "id": 1776250613968,
+      "title": "Cadeau Côme",
+      "priority": "high",
+      "project": "Anniversaire Côme",
+      "assignee": "mariealix.delassus@gmail.com",
+      "assigneeRef": "__contact_0__",
+      "done": false,
+      "created": "2026-04-15T10:56:53.968Z"
     }
   ],
   "deletedIds": [
-    "1776089241327",
-    "1776089248869",
     "1776073279291.3237",
     "1776075449758.869",
     "1776074940889",
@@ -34,12 +52,14 @@
     "1776074454656",
     "1776074418083.5205",
     "1776074418083.4592",
+    "1776089241327",
+    "1776089248869",
     "1776092637305.4001",
     "1776092637305.8157",
+    "1776094768126",
     "1776094490937",
     "1776094450869",
     "1776094418366",
-    "1776094768126",
     "1776095392631.4033",
     "1776095627743.194",
     "1776096074145",
@@ -65,6 +85,8 @@
     "1776178350835",
     "1776181181448",
     "1776233788860",
-    "1776233370713"
+    "1776233370713",
+    "1776239173135",
+    "1776249923637"
   ]
 }

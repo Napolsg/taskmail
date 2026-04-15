@@ -108,7 +108,7 @@ function buildHTML(taskList, recipientLabel) {
               <td style="vertical-align:middle;text-align:right;">
                 <div style="background:rgba(255,255,255,0.25);border-radius:10px;padding:10px 16px;display:inline-block;text-align:center;">
                   <div style="font-size:28px;font-weight:800;color:white;line-height:1;">${taskList.length}</div>
-                  <div style="font-size:12px;color:rgba(255,255,255,0.9);">tache${taskList.length > 1 ? 's' : ''} ${recipientLabel}</div>
+                  <div style="font-size:12px;color:rgba(255,255,255,0.9);">tâche${taskList.length > 1 ? 's' : ''} ${recipientLabel}</div>
                 </div>
               </td>
             </tr></table>
@@ -135,7 +135,7 @@ function sendMail(to, subject, html) {
 
 (async () => {
   const pending = tasks.filter(t => !t.done && !deletedIds.has(String(t.id)));
-  if (!pending.length) { console.log('Aucune tache en attente'); process.exit(0); }
+  if (!pending.length) { console.log('Aucune tâche en attente'); process.exit(0); }
 
   // Email au proprietaire : taches sans assigne ou recues d'un autre depot
   const ownerTasks = pending.filter(t =>
@@ -147,7 +147,7 @@ function sendMail(to, subject, html) {
   if (ownerTasks.length) {
     await sendMail(
       process.env.GMAIL_USER,
-      `To Do du Bonheur -- ${ownerTasks.length} tache${ownerTasks.length > 1 ? 's' : ''} a faire`,
+      `To Do du Bonheur -- ${ownerTasks.length} tâche${ownerTasks.length > 1 ? 's' : ''} a faire`,
       buildHTML(ownerTasks, 'en attente')
     );
     console.log(`Email envoye au proprietaire (${ownerTasks.length} taches)`);
@@ -191,7 +191,7 @@ function sendMail(to, subject, html) {
   for (const [email, assignedTasks] of Object.entries(byAssignee)) {
     await sendMail(
       email,
-      `To Do du Bonheur -- ${assignedTasks.length} tache${assignedTasks.length > 1 ? 's' : ''} qui vous sont assignees`,
+      `To Do du Bonheur -- ${assignedTasks.length} tâche${assignedTasks.length > 1 ? 's' : ''} qui vous sont assignees`,
       buildHTML(assignedTasks, 'assignees')
     );
     console.log(`Email envoye a ${email} (${assignedTasks.length} taches)`);

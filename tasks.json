@@ -1,17 +1,6 @@
 {
   "tasks": [
     {
-      "id": 1776249923637,
-      "title": "Marie-Alix de Lassus",
-      "priority": "medium",
-      "project": "",
-      "done": true,
-      "created": "2026-04-15T10:45:22.973Z",
-      "assignee": "",
-      "assigneeRef": "",
-      "assignedBy": "taskmail-MA"
-    },
-    {
       "id": 1776250692899,
       "title": "Demander les dispos aux parents",
       "priority": "high",
@@ -97,6 +86,7 @@
     "1776181181448",
     "1776233788860",
     "1776233370713",
-    "1776239173135"
+    "1776239173135",
+    "1776249923637"
   ]
 }

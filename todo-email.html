@@ -436,8 +436,8 @@ html, body {
 <div class="filters">
   <button class="fbtn active" onclick="setFilter('all',this)">Toutes</button>
   <button class="fbtn" onclick="setFilter('me',this)">Moi</button>
-  <button class="fbtn" id="filter-both-btn" onclick="setFilter('both',this)" style="display:none;"></button>
-  <button class="fbtn" id="filter-contact-btn" onclick="setFilter('contact',this)" style="display:none;"></button>
+  <button class="fbtn" id="filter-both-btn" onclick="setFilter('both',this)"></button>
+  <button class="fbtn" id="filter-contact-btn" onclick="setFilter('contact',this)"></button>
 </div>
 
 <!-- TASKS -->
@@ -552,7 +552,7 @@ html, body {
       <label>Assigner à</label>
       <select class="sheet-input" id="e-assignee" style="padding:6px 8px;" onchange="onAssigneeChange(this)"></select>
     </div>
-    <div id="new-contact-form" style="display:none; padding:10px 14px; background:#F2F2F7; border-radius:8px; margin:0 0 8px; gap:6px; flex-direction:column;">
+    <div id="inline-contact-form" style="display:none; padding:10px 14px; background:#F2F2F7; border-radius:8px; margin:0 0 8px; gap:6px; flex-direction:column;">
       <input class="sheet-input" type="text" id="contact-name" placeholder="Nom du contact" style="margin-bottom:6px;">
       <select id="contact-type" class="sheet-input" style="margin-bottom:6px;">
         <option value="repo">Dépôt GitHub</option>
@@ -567,7 +567,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v9.1</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v9.4</div>
 
 <div id="toasts"></div>
 
@@ -595,6 +595,15 @@ async function init() {
   if (config.to && document.getElementById('ejs-to'))       document.getElementById('ejs-to').value       = config.to;
   if (config.ghToken   && document.getElementById('gh-token'))   document.getElementById('gh-token').value   = config.ghToken;
   if (config.ownerName && document.getElementById('owner-name')) document.getElementById('owner-name').value = config.ownerName;
+
+  // Initialise les labels des filtres avec le contact par défaut
+  const defCt = contacts[0];
+  if (defCt) {
+    const bothBtn    = document.getElementById('filter-both-btn');
+    const contactBtn = document.getElementById('filter-contact-btn');
+    if (bothBtn)    bothBtn.textContent    = defCt.name + ' et moi';
+    if (contactBtn) contactBtn.textContent = defCt.name;
+  }
 
   // Affiche la liste immédiatement
   render();
@@ -929,7 +938,7 @@ function openEdit(id) {
   if (eAssign) {
     eAssign.value = t.assigneeRef || t.assignee || '';
   }
-  const form = document.getElementById('new-contact-form');
+  const form = document.getElementById('inline-contact-form');
   if (form) form.style.display = 'none';
   document.getElementById('e-overlay').classList.add('open');
   document.getElementById('e-sheet').classList.add('open');
@@ -1272,7 +1281,7 @@ function populateAssigneeSelects() {
 
 function onAssigneeChange(sel) {
   if (!sel) return;
-  const editForm = document.getElementById('new-contact-form');
+  const editForm = document.getElementById('inline-contact-form');
   const addForm  = document.getElementById('add-bar-contact-form');
 
   if (sel.value === '__new__') {
@@ -1303,6 +1312,12 @@ function getAssigneeEmail(val) {
     return ct.email || ct.repo || '';
   }
   return val;
+}
+
+function getAssignedByLabel(t) {
+  if (!t.assignedBy) return '';
+  const ct = contacts.find(c => c.repo === t.assignedBy || c.name === t.assignedBy);
+  return ct ? ct.name : t.assignedBy;
 }
 
 function getAssigneeLabel(t) {

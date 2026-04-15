@@ -567,7 +567,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v9.4</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v9.6</div>
 
 <div id="toasts"></div>
 
@@ -1071,7 +1071,7 @@ function renderTasks() {
         <div class="task-title">${esc(t.title)}</div>
         ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ''}
 
-        ${(t.assignedBy || (t.assigneeRef && t.assigneeRef !== '__me__' && t.assigneeRef !== '')) ? '<div class="task-project" style="color:' + (t.assignedBy ? '#2eb88a' : '#2D5BE3') + ';">Responsable : ' + esc(t.assignedBy ? getAssignedByLabel(t) : getAssigneeLabel(t)) + '</div>' : ''}
+        ${(!t.assignedBy && t.assigneeRef && t.assigneeRef !== '__me__' && t.assigneeRef !== '') ? '<div class="task-project" style="color:#2D5BE3;">Responsable : ' + esc(getAssigneeLabel(t)) + '</div>' : ''}
       </div>
       <button class="edit-btn" onclick="openEdit(${t.id})">✎</button>
     </div>
@@ -1321,10 +1321,14 @@ function getAssignedByLabel(t) {
 }
 
 function getAssigneeLabel(t) {
-  if (!t.assigneeRef || !t.assigneeRef.startsWith('__contact_')) return t.assignee || '';
-  const ct = getContactByValue(t.assigneeRef);
-  if (!ct) return t.assignee || '';
-  return ct.name + (ct.repo ? ' (' + ct.repo + ')' : ct.email ? ' (' + ct.email + ')' : '');
+  if (!t.assigneeRef) return '';
+  if (t.assigneeRef === '__me__') return 'Moi';
+  if (t.assigneeRef.startsWith('__contact_') || t.assigneeRef.startsWith('__both_')) {
+    const ct = getContactByValue(t.assigneeRef);
+    if (!ct) return '';
+    return t.assigneeRef.startsWith('__both_') ? ct.name + ' et moi' : ct.name;
+  }
+  return '';
 }
 
 function getContactByValue(val) {

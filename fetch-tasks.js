@@ -94,7 +94,7 @@ function readEmails() {
                   if (line.startsWith('-')) { priority = 'low';  title = line.slice(1).trim(); }
                   if (title && title.length > 1) {
                     newTasks.push({
-                      id: Date.now() + Math.random(),
+                      id: Date.now() + Math.floor(Math.random() * 1000),
                       title, priority,
                       project: '', done: false,
                       created: new Date().toISOString()

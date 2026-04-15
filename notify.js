@@ -3,6 +3,8 @@ const fs = require('fs');
 
 const raw      = JSON.parse(fs.readFileSync('tasks.json', 'utf8'));
 const allTasks = Array.isArray(raw) ? raw : (raw.tasks || []);
+const config   = fs.existsSync('config.json') ? JSON.parse(fs.readFileSync('config.json', 'utf8')) : {};
+const contacts = config.contacts || [];
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -97,12 +99,25 @@ function sendMail(to, subject, html) {
     }
 
     for (const task of newAssigned) {
+      // Trouve l'email du destinataire via contacts
+      let toEmail = null;
+      if (task.assigneeRef) {
+        const match = task.assigneeRef.match(/__contact_(\d+)__/);
+        if (match) {
+          const ct = contacts[parseInt(match[1])];
+          if (ct && ct.email) toEmail = ct.email;
+        }
+      }
+      if (!toEmail) {
+        console.log(`Pas d'email pour la tâche : ${task.title}`);
+        continue;
+      }
       await sendMail(
-        process.env.GMAIL_USER,
+        toEmail,
         `To Do du Bonheur — Nouvelle tâche : ${task.title}`,
         buildHTML(task, 'assigned')
       );
-      console.log(`Notification assignation envoyée pour : ${task.title}`);
+      console.log(`Notification assignation envoyée à ${toEmail} pour : ${task.title}`);
     }
 
   } else {

@@ -562,7 +562,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.4</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.5</div>
 
 <div id="toasts"></div>
 
@@ -1015,17 +1015,23 @@ function sortByPriority(list) {
 }
 function getFiltered() {
   let list;
-  if (filter==='active') list = tasks.filter(t => !t.done);
-  else if (filter==='done')   list = tasks.filter(t =>  t.done);
-  else if (filter==='high')   list = tasks.filter(t => t.priority==='high' && !t.done);
-  else list = [...tasks];
+  if (filter === 'me')
+    list = tasks.filter(t => !t.assigneeRef || t.assigneeRef === '' || t.assigneeRef === '__me__');
+  else if (filter === 'contact')
+    list = tasks.filter(t => t.assigneeRef && t.assigneeRef.startsWith('__contact_'));
+  else if (filter === 'both')
+    list = tasks.filter(t => t.assigneeRef && t.assigneeRef.startsWith('__both_'));
+  else
+    list = [...tasks];
   return sortByPriority(list);
 }
 
 function renderTasks() {
   const el   = document.getElementById('task-list');
   const list = getFiltered();
-  const labels = { all:'Toutes les tâches', active:'À faire', done:'Tâches faites', high:'Tâches urgentes' };
+  const ct0 = contacts[0];
+  const contactName = ct0 ? ct0.name : 'Contact';
+  const labels = { all:'Toutes les tâches', me:'Mes tâches', contact: contactName, both: contactName + ' et moi' };
   const _sh = document.getElementById('section-head'); if(_sh) _sh.textContent = labels[filter] || 'Tâches';
 
   const doneBar = document.getElementById('done-bar');
@@ -1044,7 +1050,7 @@ function renderTasks() {
         <div class="task-title">${esc(t.title)}</div>
         ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ''}
 
-        ${(t.assigneeRef || t.assignedBy) ? '<div class="task-project" style="color:' + (t.assignedBy ? '#2eb88a' : '#2D5BE3') + ';">Responsable : ' + esc(t.assignedBy || getAssigneeLabel(t)) + '</div>' : ''}
+        ${(t.assignedBy || (t.assigneeRef && t.assigneeRef !== '__me__' && t.assigneeRef !== '')) ? '<div class="task-project" style="color:' + (t.assignedBy ? '#2eb88a' : '#2D5BE3') + ';">Responsable : ' + esc(t.assignedBy || getAssigneeLabel(t)) + '</div>' : ''}
       </div>
       <button class="edit-btn" onclick="openEdit(${t.id})">✎</button>
     </div>

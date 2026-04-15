@@ -33,7 +33,21 @@ function buildHTML(task, type) {
     ? 'linear-gradient(135deg,#FF6B6B,#FF8E53)'
     : 'linear-gradient(135deg,#6BCB77,#38ef7d)';
 
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<style>
+  :root { color-scheme: light; }
+  body { background-color: #F2F2F7 !important; color: #1C1C1E !important; }
+  td { color: #1C1C1E !important; }
+  span { color: inherit; }
+  @media (prefers-color-scheme: dark) {
+    body { background-color: #F2F2F7 !important; color: #1C1C1E !important; }
+    td { background-color: inherit !important; color: #1C1C1E !important; }
+    .content-cell { background-color: #FFFFFF !important; color: #1C1C1E !important; }
+    .bg-gray { background-color: #F2F2F7 !important; }
+  }
+</style></head>
   <body style="margin:0;padding:0;background:#F2F2F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;" bgcolor="#F2F2F7">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F7;padding:32px 16px;">
       <tr><td>
@@ -51,8 +65,8 @@ function buildHTML(task, type) {
               </td>
             </tr></table>
           </td></tr>
-          <tr><td style="background:#FFFFFF;color:#1C1C1E;padding:20px 28px;">
-            <div style="background:#F2F2F7;border-radius:12px;padding:14px 16px;">
+          <tr><td class="content-cell" style="background:#FFFFFF;color:#1C1C1E;padding:20px 28px;">
+            <div class="bg-gray" style="background:#F2F2F7;border-radius:12px;padding:14px 16px;">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <span style="background:${pBg[task.priority]};color:${pColor[task.priority]};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;">${pLabel[task.priority]}</span>
                 <span style="font-size:15px;color:#1C1C1E !important;font-weight:600;">${task.title}</span>
@@ -61,7 +75,7 @@ function buildHTML(task, type) {
               ${task.assignedBy ? `<p style="font-size:12px;color:#8E8E93;margin:8px 0 0;">${isAssigned ? 'Assigné par' : 'Complété par'} : ${task.assignedBy}</p>` : ''}
             </div>
           </td></tr>
-          <tr><td style="background:#FFFFFF;color:#1C1C1E;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
+          <tr><td class="content-cell" style="background:#FFFFFF;color:#1C1C1E;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
             <a href="${APP_URL}" style="display:inline-block;background:${btnGrad};color:white;text-decoration:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;">Ouvrir TaskMail</a>
           </td></tr>
         </table>

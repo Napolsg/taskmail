@@ -80,7 +80,21 @@ function buildHTML(taskList, recipientLabel) {
       </td>
     </tr>`).join('');
 
-  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head>
+  return `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<style>
+  :root { color-scheme: light; }
+  body { background-color: #F2F2F7 !important; color: #1C1C1E !important; }
+  td { color: #1C1C1E !important; }
+  span { color: inherit; }
+  @media (prefers-color-scheme: dark) {
+    body { background-color: #F2F2F7 !important; color: #1C1C1E !important; }
+    td { background-color: inherit !important; color: #1C1C1E !important; }
+    .content-cell { background-color: #FFFFFF !important; color: #1C1C1E !important; }
+    .bg-gray { background-color: #F2F2F7 !important; }
+  }
+</style></head>
   <body style="margin:0;padding:0;background:#F2F2F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;" bgcolor="#F2F2F7">
     <table width="100%" cellpadding="0" cellspacing="0" style="background:#F2F2F7;padding:32px 16px;">
       <tr><td>
@@ -99,10 +113,10 @@ function buildHTML(taskList, recipientLabel) {
               </td>
             </tr></table>
           </td></tr>
-          <tr><td style="background:#FFFFFF;color:#1C1C1E;">
+          <tr><td class="content-cell" style="background:#FFFFFF;color:#1C1C1E;">
             <table width="100%" cellpadding="0" cellspacing="0">${rows}</table>
           </td></tr>
-          <tr><td style="background:#FFFFFF;color:#1C1C1E;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
+          <tr><td class="content-cell" style="background:#FFFFFF;color:#1C1C1E;border-top:1px solid #F2F2F7;border-radius:0 0 16px 16px;padding:16px 28px;text-align:center;">
             <a href="${APP_URL}" style="display:inline-block;background:linear-gradient(135deg,#FF6B6B,#FFD93D);color:white;text-decoration:none;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;">Ouvrir TaskMail</a>
           </td></tr>
         </table>

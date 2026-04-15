@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
 <link rel="apple-touch-icon-precomposed" href="icon-192.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TaskMail</title>
+<title>TDB</title>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -562,7 +562,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.5</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.8</div>
 
 <div id="toasts"></div>
 
@@ -708,10 +708,17 @@ function sanitize(str) {
   return (str || '').replace(/[^ -~]/g, '').trim();
 }
 
+function saveOwnerName() {
+  config.ownerName = (document.getElementById('owner-name')?.value || '').trim();
+  localStorage.setItem('tm2_config', JSON.stringify(config));
+  saveConfigToGitHub();
+  toast('Nom sauvegardé', 'ok');
+}
+
 function saveConfig() {
   config = {
-    ghToken:   sanitize(document.getElementById('gh-token')    ? document.getElementById('gh-token').value    : (config.ghToken || '')),
-    ownerName: document.getElementById('owner-name') ? document.getElementById('owner-name').value.trim() : (config.ownerName || ''),
+    ...config,
+    ghToken: sanitize(document.getElementById('gh-token') ? document.getElementById('gh-token').value : (config.ghToken || '')),
   };
   localStorage.setItem('tm2_config', JSON.stringify(config));
   toast('Configuration sauvegardée', 'ok');
@@ -1050,7 +1057,7 @@ function renderTasks() {
         <div class="task-title">${esc(t.title)}</div>
         ${t.project ? `<div class="task-project">${esc(t.project)}</div>` : ''}
 
-        ${(t.assignedBy || (t.assigneeRef && t.assigneeRef !== '__me__' && t.assigneeRef !== '')) ? '<div class="task-project" style="color:' + (t.assignedBy ? '#2eb88a' : '#2D5BE3') + ';">Responsable : ' + esc(t.assignedBy || getAssigneeLabel(t)) + '</div>' : ''}
+        ${(t.assignedBy || (t.assigneeRef && t.assigneeRef !== '__me__' && t.assigneeRef !== '')) ? '<div class="task-project" style="color:' + (t.assignedBy ? '#2eb88a' : '#2D5BE3') + ';">Responsable : ' + esc(t.assignedBy ? getAssignedByLabel(t) : getAssigneeLabel(t)) + '</div>' : ''}
       </div>
       <button class="edit-btn" onclick="openEdit(${t.id})">✎</button>
     </div>

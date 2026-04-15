@@ -485,18 +485,23 @@ html, body {
 
 
 
-  <div class="sheet-group-label">GitHub</div>
+  <div class="sheet-group-label">Votre nom</div>
+  <div class="sheet-group">
+    <div class="sheet-row">
+      <label>Prénom</label>
+      <input class="sheet-input" type="text" id="owner-name" placeholder="ex: Napo">
+    </div>
+  </div>
+  <button class="sheet-btn btn-blue" onclick="saveOwnerName()">Sauvegarder le nom</button>
+
+  <div class="sheet-group-label">Token GitHub</div>
   <div class="sheet-group" id="token-box">
     <div class="sheet-row">
-      <label>Votre nom</label>
-      <input class="sheet-input" type="text" id="owner-name" placeholder="ex: Louis">
-    </div>
-    <div class="sheet-row">
-      <label>Token GitHub</label>
+      <label>Token</label>
       <input class="sheet-input" type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx">
     </div>
   </div>
-  <button class="sheet-btn btn-blue" id="save-btn" onclick="saveConfig()">Sauvegarder</button>
+  <button class="sheet-btn btn-blue" id="save-btn" onclick="saveConfig()">Sauvegarder le token</button>
 
   <div class="sheet-group-label">Contacts</div>
   <div class="sheet-group" id="contacts-list"></div>
@@ -562,7 +567,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.8</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v9.1</div>
 
 <div id="toasts"></div>
 

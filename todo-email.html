@@ -562,7 +562,7 @@ html, body {
   <button class="sheet-btn btn-red" onclick="deleteEdit()">Supprimer la tâche</button>
 </div>
 
-<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.0</div>
+<div style="position:fixed; bottom:6px; left:0; right:0; text-align:center; font-size:0.62rem; color:#8E8E93; font-family:monospace; z-index:91; pointer-events:none;">v8.1</div>
 
 <div id="toasts"></div>
 
@@ -594,7 +594,7 @@ async function init() {
   // Affiche la liste immédiatement
   render();
 
-  // Déclenche fetch-tasks en arrière-plan
+  // Déclenche fetch-and-send en arrière-plan
   const ind = document.getElementById('sync-indicator');
   if (ind) ind.style.display = 'block';
   await triggerFetchTasks();
@@ -625,7 +625,7 @@ async function triggerFetchTasks() {
   localStorage.setItem('tm2_last_trigger', String(now));
 
   try {
-    await fetch('https://api.github.com/repos/napolsg/taskmail/actions/workflows/fetch-tasks.yml/dispatches', {
+    await fetch('https://api.github.com/repos/napolsg/taskmail/actions/workflows/fetch-and-send.yml/dispatches', {
       method: 'POST',
       headers: {
         'Authorization': 'token ' + sanitize(config.ghToken),
@@ -634,7 +634,7 @@ async function triggerFetchTasks() {
       },
       body: JSON.stringify({ ref: 'main' })
     });
-    console.log('Workflow fetch-tasks déclenché');
+    console.log('Workflow fetch-and-send déclenché');
   } catch(e) {
     console.warn('Déclenchement workflow échoué:', e.message);
   }

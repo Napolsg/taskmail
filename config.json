@@ -11,5 +11,10 @@
       "both": true
     }
   ],
-  "ownerName": "Napo"
+  "ownerName": "Napo",
+  "sentToday": {
+    "2026-04-15": [
+      "06:00"
+    ]
+  }
 }
